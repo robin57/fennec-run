@@ -80,21 +80,25 @@ canvas{display:block;width:100%;max-width:100%;aspect-ratio:5/3;image-rendering:
 @media (pointer:coarse){.pad{display:flex}}
 .rotate{display:none;margin:0;padding:8px 12px;border:1px dashed var(--edge);border-radius:6px;color:var(--dim);font-size:14px}
 @media (pointer:coarse) and (orientation:portrait){.rotate{display:block}}
-/* téléphone en paysage : le jeu prend tout l'écran */
-@media (pointer:coarse) and (orientation:landscape){
-  html,body{height:100%;overflow:hidden;overscroll-behavior:none}
-  body{padding-block:0}
-  header,.legend{display:none}
-  .wrap{max-width:none;gap:0}
-  .cabinet{border:0;border-radius:0}
-  .hud{padding:3px 12px;font-size:13px;gap:2px 12px;border-bottom-width:2px}
-  .hud span b{font-size:11px}
-  .icon-btn{font-size:12px;padding:0 8px}
-  canvas{width:auto;margin:0 auto;height:min(calc(100dvh - 30px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)), calc((100vw - 32px) * .6))}
-  .card{gap:6px}
-  .card p{font-size:13px}
-  .card .small{font-size:12px}
-}
+/* mode immersif (téléphone en paysage ou plein écran) : le jeu occupe tout l'écran */
+html.immersive,html.immersive body{height:100%;overflow:hidden;overscroll-behavior:none}
+html.immersive body{padding:0}
+html.immersive header,html.immersive .legend,html.immersive .rotate{display:none}
+html.immersive .wrap{max-width:none;gap:0;height:100%}
+html.immersive .cabinet{border:0;border-radius:0;position:relative;height:100%}
+html.immersive .hud{position:absolute;top:0;left:0;right:0;z-index:4;background:rgba(27,19,32,.55);border-bottom:0;font-size:12px;gap:2px 12px;
+  padding:2px max(10px,env(safe-area-inset-right,0px)) 2px max(10px,env(safe-area-inset-left,0px))}
+html.immersive .hud span b{font-size:10px}
+html.immersive .icon-btn{font-size:12px;padding:0 8px;min-height:24px}
+html.immersive .stage{height:100%}
+html.immersive canvas{width:100%;height:100%;aspect-ratio:auto;object-fit:contain}
+html.immersive .toast{top:32px}
+html.immersive .overlay{overflow-y:auto;padding:36px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+html.immersive .card{gap:6px;max-width:66ch}
+html.immersive .card h2{font-size:24px}
+html.immersive .card p{font-size:13px;line-height:1.35}
+html.immersive .card .small{font-size:11.5px}
+html.immersive .play{padding:7px 20px;font-size:16px;margin-top:0}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--dim);font-size:14px}
 kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px solid var(--edge);border-bottom-width:3px;border-radius:4px;padding:1px 6px;color:var(--sand)}
 .icon-btn{font-family:var(--display);background:none;border:1px solid var(--edge);color:var(--dim);border-radius:4px;padding:2px 10px;cursor:pointer;font-size:14px}
@@ -129,6 +133,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
       <span><b data-i18n="time">Temps</b><span id="hTime">0:00</span></span>
       <span class="hud-btns">
       <button class="icon-btn" id="pauseBtn" type="button" aria-label="Pause">❚❚</button>
+      <button class="icon-btn" id="fsBtn" type="button" hidden>⛶</button>
       <button class="icon-btn" id="langBtn" type="button">EN</button>
       <button class="icon-btn" id="muteBtn" type="button" aria-pressed="false">Son : oui</button>
       </span>
@@ -141,6 +146,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
           <h2 id="ovTitle">Fennec Run</h2>
           <p id="ovText">Rejoins le portail au bout de chaque désert. Évite les sables mouvants, écrase les scarabées en leur sautant dessus, frappe les jarres par en dessous.</p>
           <p class="small" id="ovSmall">Certaines jarres cachent une figue de barbarie : le fennec grandit et encaisse un coup. Le bouclier arrête 3 attaques venues de face, venin compris. Les ennemis vaincus lâchent des gemmes, plus précieuses s'ils sont dangereux. Toutes les 100 gemmes : une vie en plus.</p>
+          <p class="small" id="ovTip" hidden></p>
           <div class="btns">
             <button class="play" id="playBtn" type="button">Jouer</button>
             <button class="play alt" id="altBtn" type="button" hidden>Nouvelle partie</button>
@@ -175,7 +181,8 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 ctx.imageSmoothingEnabled = false;
-const T = 16, VW = 400, VH = 240, H = 15;
+const T = 16, VH = 240, H = 15;
+let VW = 400; // largeur de vue : s'élargit pour remplir les écrans larges
 const GRAV = 0.38, ACC = 0.26, MAXV = 2.3, JUMPV = -7.8; // saut max ~76 px (4,75 tuiles)
 const SMALL_W = 11, SMALL_H = 14, BIG_W = 18, BIG_H = 28;
 const SWORD_MAXV = 1.9; // le cimeterre ralentit la course
@@ -199,6 +206,8 @@ const STR = {
     play: 'Jouer', cont: 'Continuer', newGame: 'Nouvelle partie',
     contText: (l, s, n) => 'Partie en cours : niveau ' + l + ', ' + s + ' points, ' + n + (n > 1 ? ' vies.' : ' vie.'),
     contSmall: 'Ta progression est enregistrée au début de chaque niveau, sur cet appareil.',
+    iosTip: 'Sur iPhone, pour jouer en plein écran : bouton Partager, puis « Sur l’écran d’accueil », puis lance le jeu depuis la nouvelle icône.',
+    fsAria: 'Plein écran',
     pauseTitle: 'Pause', pauseText: 'Le fennec reprend son souffle.', pauseSmall: "P ou Échap pour reprendre. Si tu retournes à l'accueil, le niveau reprendra à son début.", resume: 'Reprendre', menu: 'Accueil',
     overTitle: 'Partie terminée', overText: (l, s, g) => 'Tu es arrivé au niveau ' + l + ' avec ' + s + ' points et ' + g + ' gemmes.', newRecord: 'Nouveau record !', record: (b, l) => 'Record : ' + b + ' points · niveau ' + l,
     clearTitle: l => 'Niveau ' + l + ' terminé', clearText: (t, b, s) => 'Temps ' + t + ' · bonus ' + b + ' · score ' + s + '.', next: l => 'Niveau ' + l,
@@ -242,6 +251,8 @@ const STR = {
     play: 'Play', cont: 'Continue', newGame: 'New game',
     contText: (l, s, n) => 'Saved game: level ' + l + ', ' + s + ' points, ' + n + (n > 1 ? ' lives.' : ' life.'),
     contSmall: 'Your progress is saved at the start of each level, on this device.',
+    iosTip: 'On iPhone, to play full screen: tap Share, then “Add to Home Screen”, then start the game from the new icon.',
+    fsAria: 'Full screen',
     pauseTitle: 'Paused', pauseText: 'The fennec catches its breath.', pauseSmall: 'P or Esc to resume. If you go back to the menu, the level will restart from the beginning.', resume: 'Resume', menu: 'Main menu',
     overTitle: 'Game over', overText: (l, s, g) => 'You reached level ' + l + ' with ' + s + ' points and ' + g + ' gems.', newRecord: 'New record!', record: (b, l) => 'Record: ' + b + ' points · level ' + l,
     clearTitle: l => 'Level ' + l + ' complete', clearText: (t, b, s) => 'Time ' + t + ' · bonus ' + b + ' · score ' + s + '.', next: l => 'Level ' + l,
@@ -279,6 +290,7 @@ function applyStatic(){
   document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  const fb = document.getElementById('fsBtn'); fb.setAttribute('aria-label', t('fsAria')); fb.title = t('fsAria');
   const lb = document.getElementById('langBtn'); lb.textContent = t('langBtn'); lb.setAttribute('aria-label', t('langAria'));
   document.getElementById('pauseBtn').setAttribute('aria-label', t('pauseAria'));
 }
@@ -1063,6 +1075,7 @@ playBtn.addEventListener('click', menuAction);
 altBtn.addEventListener('click', () => { if (state === 'pause') quitToTitle(); else { clearSave(); startRun(); } });
 
 function showOverlay(title, text, small, btn, alt){
+  ovTip.hidden = !(state === 'title' && typeof showIosTip !== 'undefined' && showIosTip); if (!ovTip.hidden) ovTip.textContent = t('iosTip');
   ovTitle.textContent = title; ovText.textContent = text; ovSmall.textContent = small; playBtn.textContent = btn;
   altBtn.hidden = !alt; if (alt) altBtn.textContent = alt;
   overlay.hidden = false; playBtn.focus({preventScroll:true});
@@ -1688,7 +1701,7 @@ function drawDust(alpha){
   // traînées de sable poussées par le vent
   ctx.fillStyle = `rgba(240,205,150,${alpha})`;
   for (const [x0, y0, sp, len] of DUST){
-    const x = ((x0 - tick * sp * 1.6 - camX * 0.6) % 420 + 420) % 420 - 10;
+    const x = ((x0 * (VW + 20) / 420 - tick * sp * 1.6 - camX * 0.6) % (VW + 20) + (VW + 20)) % (VW + 20) - 10;
     const y = y0 + Math.sin(tick * 0.03 + x0) * 3;
     ctx.fillRect(Math.round(x), Math.round(y), len, 1);
   }
@@ -2044,8 +2057,38 @@ function hud(){
   last = v;
 }
 
+/* ---------- plein écran et adaptation à l'écran ---------- */
+const stageEl = document.querySelector('.stage'), fsBtn = document.getElementById('fsBtn'), ovTip = document.getElementById('ovTip');
+const fsEnabled = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+const coarse = () => { try { return matchMedia('(pointer:coarse)').matches; } catch(e){ return false; } };
+function fitView(){
+  const immersive = !!fsElement() || (coarse() && innerWidth > innerHeight);
+  document.documentElement.classList.toggle('immersive', immersive);
+  let w = 400;
+  if (immersive && stageEl.clientHeight > 0){ w = Math.round(VH * stageEl.clientWidth / stageEl.clientHeight / 2) * 2; w = Math.max(400, Math.min(600, w)); }
+  if (w !== VW){ VW = w; cv.width = VW; ctx.imageSmoothingEnabled = false; }
+}
+if (fsEnabled){
+  fsBtn.hidden = false;
+  fsBtn.addEventListener('click', () => {
+    const el = document.documentElement;
+    if (fsElement()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else {
+      const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch(e){} }).catch(() => {});
+    }
+  });
+}
+for (const ev of ['resize', 'orientationchange', 'fullscreenchange', 'webkitfullscreenchange']) addEventListener(ev, () => setTimeout(fitView, 60));
+document.addEventListener('fullscreenchange', () => setTimeout(fitView, 60));
+// iPhone dans Safari (hors écran d'accueil) : expliquer comment avoir le plein écran
+const inFrame = (() => { try { return window.self !== window.top; } catch(e){ return true; } })();
+const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+const standalone = navigator.standalone === true || (() => { try { return matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches; } catch(e){ return false; } })();
+const showIosTip = isIPhone && !standalone && !inFrame && !fsEnabled;
 /* ---------- Loop ---------- */
-applyStatic(); syncMute(); showBest();
+applyStatic(); syncMute(); showBest(); fitView();
 buildLevel(3, Math.floor(Math.random() * 1e9)); // décor animé de l'écran d'accueil
 showTitle();
 let acc = 0, prev = performance.now();
