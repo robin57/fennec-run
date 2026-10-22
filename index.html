@@ -1076,6 +1076,7 @@ bindPad('padL','left'); bindPad('padR','right'); bindPad('padJ','jump'); bindPad
 let state = 'title', p = null, camX = 0, score = 0, gems = 0, lives = 3, gemsToLife = 100, frames = 0, particles = [], tick = 0;
 let level = 1, runSeed = 1;
 let hp = 6, maxHp = 6; // en demi-cœurs : 6 = 3 cœurs
+let healBought = 0; // cœurs achetés à l'échoppe : le prix monte à chaque achat
 const overlay = document.getElementById('overlay'), altBtn = document.getElementById('altBtn');
 const ovTitle = document.getElementById('ovTitle'), ovText = document.getElementById('ovText'), ovSmall = document.getElementById('ovSmall'), playBtn = document.getElementById('playBtn');
 const hShield = document.getElementById('hShield'), hWeapon = document.getElementById('hWeapon'), padA = document.getElementById('padA'), hPower = document.getElementById('hPower');
@@ -1112,12 +1113,12 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, hp, maxHp }; }
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, hp, maxHp, healBought }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
-  maxHp = sv.maxHp || 6; hp = Math.min(sv.hp || maxHp, maxHp);
+  maxHp = sv.maxHp || 6; hp = Math.min(sv.hp || maxHp, maxHp); healBought = sv.healBought || 0;
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
@@ -1150,7 +1151,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
 function startRun(){
   initAudio();
   runSeed = Math.floor(Math.random() * 1e9);
-  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 6;
+  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 6; healBought = 0;
   loadLevel(1, false);
 }
 function menuAction(){
@@ -1168,7 +1169,7 @@ const shopEl = document.getElementById('shop');
 function shopItems(){
   const extra = (maxHp - 6) / 2;
   return [
-    { id: 'heal', price: 12, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 2); } },
+    { id: 'heal', price: 12 + 6 * healBought, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 2); healBought++; } },
     { id: 'big', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
     { id: 'shield', price: 20, ok: p.shield < 3, owned: p.shield >= 3, buy(){ p.shield = 3; p.bow = false; } },
     { id: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
