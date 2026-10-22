@@ -256,7 +256,10 @@ const STR = {
       bow: ['Arc', 'remplace épée et bouclier'],
       maxHeart: ['Cœur en plus', '+1 cœur pour la partie'],
       life: ['Vie', '+1 vie'],
-      arrows: ['Flèches', 'recharge à 12'],
+      arrows: ['Flèches', 'remplit le carquois'],
+      upBow: ['Arc renforcé', '2 flèches par tir, carquois de 20'],
+      upSword: ['Cimeterre aiguisé', 'plus long, coupe les tirs'],
+      upShield: ['Bouclier renforcé', '5 coups, protège aussi le dos'],
       feather: ['Plume', '20 s au début du niveau'],
       speed: ['Babouches', '10 s au début du niveau'],
     },
@@ -326,7 +329,10 @@ const STR = {
       bow: ['Bow', 'replaces sword and shield'],
       maxHeart: ['Extra heart', '+1 heart for the run'],
       life: ['Life', '+1 life'],
-      arrows: ['Arrows', 'refill to 12'],
+      arrows: ['Arrows', 'fills the quiver'],
+      upBow: ['Strong bow', '2 arrows per shot, quiver of 20'],
+      upSword: ['Sharp scimitar', 'longer, cuts through shots'],
+      upShield: ['Strong shield', '5 hits, also guards your back'],
       feather: ['Feather', '20 s at the start of the level'],
       speed: ['Wind slippers', '10 s at the start of the level'],
     },
@@ -1146,6 +1152,8 @@ let state = 'title', p = null, camX = 0, score = 0, gems = 0, lives = 3, gemsToL
 let level = 1, runSeed = 1;
 let hp = 12, maxHp = 12; // en quarts de cœur : 12 = 3 cœurs
 let arrowsLeft = 0; // flèches de l'arc
+let upBow = false, upSword = false, upShield = false; // améliorations d'armes achetées à l'échoppe
+const arrowsMax = () => upBow ? 20 : 12, shieldMax = () => upShield ? 5 : 3;
 let healBought = 0, buyFeather = false, buySpeed = false; // plume / babouches achetées : actives au début du niveau suivant // cœurs achetés à l'échoppe : le prix monte à chaque achat
 const overlay = document.getElementById('overlay'), altBtn = document.getElementById('altBtn');
 const ovTitle = document.getElementById('ovTitle'), ovText = document.getElementById('ovText'), ovSmall = document.getElementById('ovSmall'), playBtn = document.getElementById('playBtn');
@@ -1183,13 +1191,13 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, found: [...runFound], feather: buyFeather, speed: buySpeed }; }
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, up: [upBow, upSword, upShield], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
   const k = sv.q ? 1 : 2; // anciennes sauvegardes : demi-cœurs
-  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; arrowsLeft = sv.arrows ?? (sv.bow ? 12 : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
+  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; [upBow, upSword, upShield] = (sv.up || [false, false, false]).map(Boolean); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
@@ -1227,7 +1235,7 @@ function startRun(mode = false){
   initAudio(); simoun = !!mode;
   if (!simoun){ try { localStorage.removeItem('fennec-simoun'); } catch(e){} } // tout est perdu : il faut refranchir le niveau 20
   runSeed = Math.floor(Math.random() * 1e9);
-  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; runFound = new Set(); buyFeather = buySpeed = false;
+  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; upBow = upSword = upShield = false; runFound = new Set(); buyFeather = buySpeed = false;
   loadLevel(1, false);
 }
 function menuAction(){
@@ -1252,10 +1260,13 @@ function shopItems(){
   return [
     { id: 'heal', price: 12 + 6 * healBought, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 4); healBought++; } },
     { id: 'big', key: 'fig', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
-    { id: 'shield', key: 'shield', price: 20, ok: p.shield < 3, owned: p.shield >= 3, buy(){ p.shield = 3; p.bow = false; } },
+    { id: 'shield', key: 'shield', price: 20, ok: p.shield < shieldMax(), owned: p.shield >= shieldMax(), buy(){ p.shield = shieldMax(); p.bow = false; } },
     { id: 'sword', key: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
-    { id: 'bow', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = 12; } },
-    { id: 'arrows', key: 'bow', price: 15, ok: p.bow && arrowsLeft < 12, owned: false, buy(){ arrowsLeft = 12; } },
+    { id: 'bow', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); } },
+    { id: 'arrows', key: 'bow', price: 15, ok: p.bow && arrowsLeft < arrowsMax(), owned: false, buy(){ arrowsLeft = arrowsMax(); } },
+    { id: 'upBow', key: 'bow', price: 200, ok: !upBow, owned: upBow, buy(){ upBow = true; if (p.bow) arrowsLeft = arrowsMax(); } },
+    { id: 'upSword', key: 'sword', price: 200, ok: !upSword, owned: upSword, buy(){ upSword = true; } },
+    { id: 'upShield', key: 'shield', price: 150, ok: !upShield, owned: upShield, buy(){ upShield = true; if (p.shield > 0) p.shield = shieldMax(); } },
     { id: 'feather', key: 'feather', price: 30, ok: !buyFeather, owned: buyFeather, buy(){ buyFeather = true; } },
     { id: 'speed', key: 'speed', price: 25, ok: !buySpeed, owned: buySpeed, buy(){ buySpeed = true; } },
     { id: 'life', price: 100, ok: true, owned: false, buy(){ lives++; sfx.life(); } },
@@ -1396,7 +1407,7 @@ function useShield(){
 // ½ cœur pour les petits ennemis, 1 cœur pour les dangereux
 const dmgFor = e => (e.kind === 'beetle' && !e.fast) || e.kind === 'cobra' ? 2 : 4; // en quarts de cœur
 function contactHit(e){
-  if (p.shield > 0 && p.atk <= 0 && facing(e)){ // bouclier baissé pendant un coup d'épée
+  if (p.shield > 0 && p.atk <= 0 && (upShield || facing(e))){ // bouclier baissé pendant un coup d'épée
     useShield();
     const away = e.x + e.w/2 > p.x + p.w/2 ? 1 : -1;
     if (e.kind === 'beetle'){ e.dir = away; e.x += away * 6; }
@@ -1523,7 +1534,7 @@ function bossReward(){
   const y = 12 * T - 13;
   gemDrops.push(makeGem(gx, b.y, 'diamond'));
   if (!p.sword && !p.bow) pickups.push({ kind:'sword', x: gx + 8, y: 12 * T - 12, w: 14, h: 10, gone: false });
-  else if (!p.bow && p.shield < 3) pickups.push({ kind:'shield', x: gx + 8, y, w: 10, h: 12, gone: false });
+  else if (!p.bow && p.shield < shieldMax()) pickups.push({ kind:'shield', x: gx + 8, y, w: 10, h: 12, gone: false });
   else items.push({ x: gx + 8, y: 12 * T - 11, w: 12, h: 11, vx: 0.9, vy: 0, dir: 1, emerge: 0, gone: false, onGround: false });
 }
 function aimShots(n){
@@ -1781,7 +1792,7 @@ function updateShots(){
     if (!p.dying && overlap(p, s)){
       s.gone = true; burst(s.x + 3, s.y + 2, '#9be15d', 6);
       const fromFront = (s.vx < 0) === (p.face === 0);
-      if (p.shield > 0 && p.atk <= 0 && fromFront) useShield();
+      if (p.shield > 0 && p.atk <= 0 && (upShield || fromFront)) useShield();
       else if (p.inv <= 0) hurt(2); // venin, pierres, ondes de choc : ½ cœur
     }
   }
@@ -1833,7 +1844,7 @@ function updatePlayer(){
   else if (attackPressed && p.bow && p.atkCd <= 0){
     arrowsLeft--; p.atkCd = 34; p.shoot = 10; sfx.bowShot();
     const dir = p.face === 0 ? 1 : -1;
-    arrows.push({ x: dir > 0 ? p.x + p.w : p.x - 10, y: p.y + p.h * 0.45, w: 10, h: 3, vx: dir * 5.2, vy: -0.4, life: 70, gone: false });
+    for (const vy of upBow ? [-1.1, 0.2] : [-0.4]) arrows.push({ x: dir > 0 ? p.x + p.w : p.x - 10, y: p.y + p.h * 0.45, w: 10, h: 3, vx: dir * 5.2, vy, life: 70, gone: false });
   }
   if (p.shoot > 0) p.shoot--;
   attackPressed = false;
@@ -1842,7 +1853,9 @@ function updatePlayer(){
     p.atk--;
     if (p.atk >= 3 && p.atk <= 13){
       const hh = Math.max(18, p.h);
-      const box = { x: p.face === 0 ? p.x + p.w - 2 : p.x - 18, y: p.y + p.h - hh, w: 20, h: hh };
+      const reach = upSword ? 30 : 20;
+      const box = { x: p.face === 0 ? p.x + p.w - 2 : p.x + 2 - reach, y: p.y + p.h - hh, w: reach, h: hh };
+      if (upSword) for (const sh of shots) if (!sh.gone && overlap(box, sh)){ sh.gone = true; burst(sh.x + 3, sh.y + 3, '#e6e9ef', 4); }
       for (const e of enemies){
         if (e.dead || e.gone || !overlap(box, e)) continue;
         if (e.kind === 'golem'){ hitEnemy(e, 1); continue; }
@@ -1982,7 +1995,7 @@ function update(){
   updateDrops();
   updateBoss();
   for (const k of pickups){
-    if (!k.gone && !p.dying && overlap(p, k)){ tip(k.kind); k.gone = true; score += 500; burst(k.x + 5, k.y + 6, '#f2c46a', 12); if (k.kind === 'sword'){ p.sword = true; p.bow = false; sfx.swordGet(); } else if (k.kind === 'bow'){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = 12; sfx.swordGet(); } else { p.shield = 3; p.bow = false; sfx.shieldGet(); } }
+    if (!k.gone && !p.dying && overlap(p, k)){ tip(k.kind); k.gone = true; score += 500; burst(k.x + 5, k.y + 6, '#f2c46a', 12); if (k.kind === 'sword'){ p.sword = true; p.bow = false; sfx.swordGet(); } else if (k.kind === 'bow'){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); sfx.swordGet(); } else { p.shield = shieldMax(); p.bow = false; sfx.shieldGet(); } }
   }
   for (const k in bumps){ if (--bumps[k] <= 0) delete bumps[k]; }
   particles = particles.filter(q => { q.x += q.vx; q.vy += q.g; q.y += q.vy; return --q.life > 0; });
@@ -2366,7 +2379,8 @@ function draw(){
         const a0 = -Math.PI/2 - 0.4, a1 = a0 + 0.3 + prog * 2.2;
         ctx.strokeStyle = `rgba(230,233,239,${0.95 - prog * 0.6})`; ctx.lineWidth = 2*s;
         ctx.beginPath();
-        if (p.face === 0) ctx.arc(ox, oy, 12*s, a0, a1); else ctx.arc(ox, oy, 12*s, Math.PI - a1, Math.PI - a0);
+        const rr = (upSword ? 17 : 12) * s;
+        if (p.face === 0) ctx.arc(ox, oy, rr, a0, a1); else ctx.arc(ox, oy, rr, Math.PI - a1, Math.PI - a0);
         ctx.stroke(); ctx.lineWidth = 1;
       } else {
         const bx = p.face === 0 ? px + 3*s : px + 11*s;
@@ -2412,9 +2426,9 @@ function draw(){
 let last = {};
 function hud(){
   if (state === 'title') return;
-  const sh = p && p.shield > 0 ? '●'.repeat(p.shield) + '○'.repeat(3 - p.shield) : '—';
+  const sh = p && p.shield > 0 ? '●'.repeat(p.shield) + '○'.repeat(Math.max(0, shieldMax() - p.shield)) : '—';
   if (sh !== last.sh) hShield.textContent = sh;
-  const wp = p && p.sword ? t('scimitar') : p && p.bow ? t('bow') + ' ' + arrowsLeft : '—';
+  const wp = p && p.sword ? t('scimitar') + (upSword ? '+' : '') : p && p.bow ? t('bow') + (upBow ? '+' : '') + ' ' + arrowsLeft : '—';
   const al = p && p.bow ? t('atkBow') : t('atk');
   if (al !== last.al) padA.textContent = al;
   if (wp !== last.wp) hWeapon.textContent = wp;
