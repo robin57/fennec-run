@@ -246,8 +246,10 @@ const STR = {
       bow: ['Arc', 'remplace épée et bouclier'],
       maxHeart: ['Cœur en plus', '+1 cœur pour la partie'],
       life: ['Vie', '+1 vie'],
+      feather: ['Plume', '20 s au début du niveau'],
+      speed: ['Babouches', '10 s au début du niveau'],
     },
-    owned: 'déjà là',
+    owned: 'déjà là', locked: 'à découvrir',
     tips: {
       fig: ['Figue de barbarie', () => 'Le fennec grandit : le prochain coup le fait juste rapetisser, sans perdre de cœur. Déjà grand ? La figue rend un cœur.'],
       heart: ['Cœurs', () => 'Venin, pierres, ondes de choc et scarabées bleus retirent un demi-cœur ; les ennemis dangereux, un cœur entier. À zéro, tu perds une vie. Chaque lanterne allumée rend un demi-cœur.'],
@@ -305,8 +307,10 @@ const STR = {
       bow: ['Bow', 'replaces sword and shield'],
       maxHeart: ['Extra heart', '+1 heart for the run'],
       life: ['Life', '+1 life'],
+      feather: ['Feather', '20 s at the start of the level'],
+      speed: ['Wind slippers', '10 s at the start of the level'],
     },
-    owned: 'owned',
+    owned: 'owned', locked: 'not found yet',
     tips: {
       fig: ['Prickly pear', () => 'The fennec grows: the next hit only shrinks it, without costing a heart. Already big? The pear gives a heart back.'],
       heart: ['Hearts', () => 'Venom, rocks, shockwaves and blue beetles take half a heart; dangerous enemies take a whole one. At zero, you lose a life. Each lantern you light gives half a heart back.'],
@@ -1076,7 +1080,7 @@ bindPad('padL','left'); bindPad('padR','right'); bindPad('padJ','jump'); bindPad
 let state = 'title', p = null, camX = 0, score = 0, gems = 0, lives = 3, gemsToLife = 100, frames = 0, particles = [], tick = 0;
 let level = 1, runSeed = 1;
 let hp = 6, maxHp = 6; // en demi-cœurs : 6 = 3 cœurs
-let healBought = 0; // cœurs achetés à l'échoppe : le prix monte à chaque achat
+let healBought = 0, buyFeather = false, buySpeed = false; // plume / babouches achetées : actives au début du niveau suivant // cœurs achetés à l'échoppe : le prix monte à chaque achat
 const overlay = document.getElementById('overlay'), altBtn = document.getElementById('altBtn');
 const ovTitle = document.getElementById('ovTitle'), ovText = document.getElementById('ovText'), ovSmall = document.getElementById('ovSmall'), playBtn = document.getElementById('playBtn');
 const hShield = document.getElementById('hShield'), hWeapon = document.getElementById('hWeapon'), padA = document.getElementById('padA'), hPower = document.getElementById('hPower');
@@ -1113,12 +1117,12 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, hp, maxHp, healBought }; }
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, hp, maxHp, healBought, feather: buyFeather, speed: buySpeed }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
-  maxHp = sv.maxHp || 6; hp = Math.min(sv.hp || maxHp, maxHp); healBought = sv.healBought || 0;
+  maxHp = sv.maxHp || 6; hp = Math.min(sv.hp || maxHp, maxHp); healBought = sv.healBought || 0; buyFeather = !!sv.feather; buySpeed = !!sv.speed;
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
@@ -1143,6 +1147,8 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
   spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0;
+  if (buyFeather){ p.feather = 1200; buyFeather = false; }
+  if (buySpeed){ p.speedT = 600; buySpeed = false; }
   runStart = snapshot(level, keepBig, keepShield, keepSword, keepBow); writeSave(runStart);
   keys.left = keys.right = keys.jump = keys.attack = false; jumpPressed = attackPressed = false;
   state = 'play'; overlay.hidden = true;
@@ -1151,7 +1157,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
 function startRun(){
   initAudio();
   runSeed = Math.floor(Math.random() * 1e9);
-  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 6; healBought = 0;
+  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 6; healBought = 0; buyFeather = buySpeed = false;
   loadLevel(1, false);
 }
 function menuAction(){
@@ -1166,16 +1172,19 @@ altBtn.addEventListener('click', () => { if (state === 'pause') quitToTitle(); e
 
 /* ---------- échoppe entre les niveaux : les gemmes servent de monnaie ---------- */
 const shopEl = document.getElementById('shop');
+const found = k => tipsSeen.has(k);
 function shopItems(){
   const extra = (maxHp - 6) / 2;
   return [
     { id: 'heal', price: 12 + 6 * healBought, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 2); healBought++; } },
-    { id: 'big', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
-    { id: 'shield', price: 20, ok: p.shield < 3, owned: p.shield >= 3, buy(){ p.shield = 3; p.bow = false; } },
-    { id: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
-    { id: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; } },
+    { id: 'big', key: 'fig', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
+    { id: 'shield', key: 'shield', price: 20, ok: p.shield < 3, owned: p.shield >= 3, buy(){ p.shield = 3; p.bow = false; } },
+    { id: 'sword', key: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
+    { id: 'bow', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; } },
+    { id: 'feather', key: 'feather', price: 30, ok: !buyFeather, owned: buyFeather, buy(){ buyFeather = true; } },
+    { id: 'speed', key: 'speed', price: 25, ok: !buySpeed, owned: buySpeed, buy(){ buySpeed = true; } },
     { id: 'life', price: 100, ok: true, owned: false, buy(){ lives++; sfx.life(); } },
-    { id: 'maxHeart', price: 150 + 40 * extra, ok: maxHp < 12, owned: maxHp >= 12, buy(){ maxHp += 2; hp = Math.min(maxHp, hp + 2); } },
+    { id: 'maxHeart', key: 'maxHeart', price: 150 + 40 * extra, ok: maxHp < 12, owned: maxHp >= 12, buy(){ maxHp += 2; hp = Math.min(maxHp, hp + 2); } },
   ];
 }
 function renderShop(){
@@ -1184,15 +1193,16 @@ function renderShop(){
   const h = document.createElement('h3'); h.textContent = t('shopTitle', gems); shopEl.append(h);
   const row = document.createElement('div'); row.className = 'shop-items';
   for (const it of shopItems()){
-    const [name, desc] = STR[lang].shop[it.id];
+    const locked = it.key && !found(it.key);
+    const [name, desc] = locked ? ['???', t('locked')] : STR[lang].shop[it.id];
     const b = document.createElement('button'); b.type = 'button'; b.className = 'shop-item';
-    b.disabled = !it.ok || gems < it.price;
+    b.disabled = locked || !it.ok || gems < it.price;
     const nb = document.createElement('b'); nb.textContent = name;
     const ds = document.createElement('span'); ds.textContent = desc;
-    const pr = document.createElement('span'); pr.className = 'price'; pr.textContent = it.owned ? t('owned') : '◆ ' + it.price;
+    const pr = document.createElement('span'); pr.className = 'price'; pr.textContent = locked ? '' : it.owned ? t('owned') : '◆ ' + it.price;
     b.append(nb, ds, pr);
     b.addEventListener('click', () => {
-      if (b.disabled || gems < it.price || !it.ok) return;
+      if (b.disabled || locked || gems < it.price || !it.ok) return;
       gems -= it.price; it.buy(); sfx.swordGet();
       runStart = snapshot(level + 1, p.big, p.shield, p.sword, p.bow); writeSave(runStart); // achat enregistré tout de suite
       last = {}; if (ovRender) ovRender();
