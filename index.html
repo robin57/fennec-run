@@ -244,7 +244,8 @@ const STR = {
     winTitle: 'Le désert est traversé !', winTitleSim: 'Le Simoun est dompté !',
     winText: s => 'Le dernier scorpion géant est tombé. Score final : ' + s + ' points.',
     simounInfo: 'Mode Simoun débloqué : retour au niveau 1, sans rien en poche, dans des déserts en cendres. Les coups font 1,5 fois plus mal (¾ de cœur pour un coup léger, 1 cœur ½ pour un coup lourd) et les scorpions géants te visent directement. À l’échoppe, tout est déjà découvert.',
-    playSimoun: 'Mode Simoun', replaySimoun: 'Rejouer en Simoun', simLabel: 'Simoun',
+    playSimoun: 'Mode Simoun', replaySimoun: 'Rejouer en Simoun', restartSimoun: 'Recommencer en Simoun',
+    relockInfo: 'Attention : une nouvelle partie normale fait perdre l’accès au Simoun, il faudra de nouveau franchir le niveau 20.', simLabel: 'Simoun',
     simThemes: ['Désert de cendres', 'Canyon en flammes', 'Oasis morte', 'Tempête de braises'],
     shopTitle: g => 'Échoppe · ' + g + (g > 1 ? ' gemmes' : ' gemme'),
     shop: {
@@ -313,7 +314,8 @@ const STR = {
     winTitle: 'The desert is crossed!', winTitleSim: 'The Simoom is tamed!',
     winText: s => 'The last giant scorpion has fallen. Final score: ' + s + ' points.',
     simounInfo: 'Simoom mode unlocked: back to level 1, with nothing in your pockets, through deserts of ash. Hits hurt 1.5 times more (¾ of a heart for a light hit, 1½ hearts for a heavy one) and giant scorpions aim straight at you. At the shop, everything is already discovered.',
-    playSimoun: 'Simoom mode', replaySimoun: 'Play Simoom again', simLabel: 'Simoom',
+    playSimoun: 'Simoom mode', replaySimoun: 'Play Simoom again', restartSimoun: 'Restart in Simoom',
+    relockInfo: 'Careful: a new normal game removes access to Simoom, you will have to clear level 20 again.', simLabel: 'Simoom',
     simThemes: ['Desert of ash', 'Burning canyon', 'Dead oasis', 'Ember storm'],
     shopTitle: g => 'Shop · ' + g + (g > 1 ? ' gems' : ' gem'),
     shop: {
@@ -1197,7 +1199,7 @@ function showTitle(){
   setTheme(sv ? sv.level : 1);
   ui(() => {
     const s2 = readSave();
-    const extra = simounUnlocked() ? ' ' + t('simounInfo') : '';
+    const extra = simounUnlocked() ? ' ' + t('simounInfo') + ' ' + t('relockInfo') : '';
     if (s2) showOverlay('Fennec Run', t('contText', s2.level, s2.score, s2.lives) + (s2.simoun ? ' (' + t('simLabel') + ')' : ''), t('contSmall') + extra, t('cont'), t('newGame'));
     else showOverlay('Fennec Run', t('titleText'), t('titleSmall') + extra, t('play'));
     simBtn.hidden = !simounUnlocked();
@@ -1223,6 +1225,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
 }
 function startRun(mode = false){
   initAudio(); simoun = !!mode;
+  if (!simoun){ try { localStorage.removeItem('fennec-simoun'); } catch(e){} } // tout est perdu : il faut refranchir le niveau 20
   runSeed = Math.floor(Math.random() * 1e9);
   score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; runFound = new Set(); buyFeather = buySpeed = false;
   loadLevel(1, false);
@@ -1233,7 +1236,7 @@ function menuAction(){
   else if (state === 'clear') loadLevel(level + 1, p && p.big, p ? p.shield : 0, p && p.sword, p && p.bow);
   else if (state === 'pause') togglePause();
   else if (state === 'victory'){ clearSave(); startRun(true); }
-  else startRun(state === 'over' ? simoun : false); // après un game over, on rejoue dans le même mode
+  else startRun(state === 'over' && simounUnlocked()); // après un game over : Simoun si débloqué, sinon partie normale
 }
 playBtn.addEventListener('click', menuAction);
 altBtn.addEventListener('click', () => { if (state === 'pause') quitToTitle(); else { clearSave(); startRun(false); } });
@@ -1318,7 +1321,11 @@ function loseLife(){
   if (lives <= 0){
     state = 'over'; const wasBest = score > best; saveBest(); clearSave();
     const L0 = level, S0 = score, G0 = gems;
-    ui(() => showOverlay(t('overTitle'), t('overText', L0, S0, G0), wasBest ? t('newRecord') : t('record', best, bestLevel), t('newGame')));
+    ui(() => {
+      const rec = wasBest ? t('newRecord') : t('record', best, bestLevel);
+      if (simounUnlocked()) showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec + ' ' + t('relockInfo'), t('restartSimoun'), t('newGame'));
+      else showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec, t('newGame'));
+    });
   } else {
     hp = maxHp; spawnPlayer(false); resetBossFight();
     if (runStart){ runStart.hp = hp; runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; writeSave(runStart); }
@@ -1329,7 +1336,7 @@ function winGame(){
   state = 'victory'; saveBest(); clearSave(); sfx.win();
   try { localStorage.setItem('fennec-simoun', '1'); } catch(e){}
   const S0 = score, wasSim = simoun;
-  ui(() => showOverlay(t(wasSim ? 'winTitleSim' : 'winTitle'), t('winText', S0), t('simounInfo'), t(wasSim ? 'replaySimoun' : 'playSimoun'), t('newGame')));
+  ui(() => showOverlay(t(wasSim ? 'winTitleSim' : 'winTitle'), t('winText', S0), t('simounInfo') + ' ' + t('relockInfo'), t(wasSim ? 'replaySimoun' : 'playSimoun'), t('newGame')));
 }
 function winLevel(){
   if (level % 20 === 0){ score += 300 * level; return winGame(); }
