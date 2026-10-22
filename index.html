@@ -111,6 +111,17 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 .hud-btns .icon-btn{min-height:28px}
+.overlay{overflow:auto}
+.shop{display:grid;gap:6px;width:min(100%,46ch);margin-top:2px}
+.shop h3{margin:0;font-family:var(--display);font-weight:700;font-size:16px;color:var(--gem)}
+.shop-items{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.shop-item{display:grid;gap:0;min-width:96px;padding:5px 8px;border:2px solid var(--edge);border-radius:4px;background:var(--panel);color:var(--sand);font-family:var(--body);font-size:12px;line-height:1.25;cursor:pointer;text-align:center}
+.shop-item b{font-family:var(--display);font-weight:700;font-size:13px}
+.shop-item .price{color:var(--gem);font-family:var(--display)}
+.shop-item:disabled{opacity:.4;cursor:default}
+.shop-item:not(:disabled):hover{border-color:var(--gem)}
+.shop-item:focus-visible{outline:2px solid var(--gem);outline-offset:2px}
+@media (pointer:coarse) and (orientation:landscape){.shop-item{min-width:84px;padding:3px 6px}}
 </style>
 
 <div class="wrap">
@@ -145,6 +156,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
         <div class="card">
           <h2 id="ovTitle">Fennec Run</h2>
           <p id="ovText">Rejoins le portail au bout de chaque désert. Évite les sables mouvants, écrase les scarabées en leur sautant dessus, frappe les jarres par en dessous.</p>
+          <div class="shop" id="shop" hidden></div>
           <p class="small" id="ovSmall">Certaines jarres cachent une figue de barbarie : le fennec grandit et encaisse un coup. Le bouclier arrête 3 attaques venues de face, venin compris. Les ennemis vaincus lâchent des gemmes, plus précieuses s'ils sont dangereux. Toutes les 100 gemmes : une vie en plus.</p>
           <p class="small" id="ovTip" hidden></p>
           <div class="btns">
@@ -202,7 +214,7 @@ const STR = {
     soundOn: 'Son : oui', soundOff: 'Son : non',
     best: (b, l) => 'Record : ' + b + (l ? ' · niveau ' + l : ''),
     titleText: 'Rejoins le portail au bout de chaque désert. Évite les sables mouvants, écrase les scarabées en leur sautant dessus, frappe les jarres par en dessous.',
-    titleSmall: 'Le fennec a 3 cœurs : un coup en retire un demi ou un entier selon le danger, chaque lanterne allumée en rend un demi. La figue de barbarie, cachée dans certaines jarres, le fait grandir : le coup suivant le rapetisse sans lui coûter de cœur. Le bouclier arrête 3 attaques de face. Chaque scorpion géant vaincu donne un cœur de plus. Toutes les 100 gemmes : une vie en plus.',
+    titleSmall: 'Le fennec a 3 cœurs : un coup en retire un demi ou un entier selon le danger, chaque lanterne allumée en rend un demi. La figue de barbarie, cachée dans certaines jarres, le fait grandir : le coup suivant le rapetisse sans lui coûter de cœur. Le bouclier arrête 3 attaques de face. Chaque scorpion géant vaincu donne un cœur de plus. Entre deux niveaux, dépense tes gemmes à l’échoppe : cœurs, armes, vies…',
     play: 'Jouer', cont: 'Continuer', newGame: 'Nouvelle partie',
     contText: (l, s, n) => 'Partie en cours : niveau ' + l + ', ' + s + ' points, ' + n + (n > 1 ? ' vies.' : ' vie.'),
     contSmall: 'Ta progression est enregistrée au début de chaque niveau, sur cet appareil.',
@@ -225,6 +237,17 @@ const STR = {
     scimitar: 'Cimeterre', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
+    shopTitle: g => 'Échoppe · ' + g + (g > 1 ? ' gemmes' : ' gemme'),
+    shop: {
+      heal: ['Cœur', 'rend 1 cœur'],
+      big: ['Figue', 'commence grand'],
+      shield: ['Bouclier', '3 coups de face'],
+      sword: ['Cimeterre', 'remplace l’arc'],
+      bow: ['Arc', 'remplace épée et bouclier'],
+      maxHeart: ['Cœur en plus', '+1 cœur pour la partie'],
+      life: ['Vie', '+1 vie'],
+    },
+    owned: 'déjà là',
     tips: {
       fig: ['Figue de barbarie', () => 'Le fennec grandit : le prochain coup le fait juste rapetisser, sans perdre de cœur. Déjà grand ? La figue rend un cœur.'],
       heart: ['Cœurs', () => 'Venin, pierres, ondes de choc et scarabées bleus retirent un demi-cœur ; les ennemis dangereux, un cœur entier. À zéro, tu perds une vie. Chaque lanterne allumée rend un demi-cœur.'],
@@ -235,7 +258,7 @@ const STR = {
       feather: ['Plume', () => 'Pendant 20 secondes, tu sautes plus haut et tu retombes en planant.'],
       speed: ['Babouches du vent', () => 'Pendant 10 secondes, tu cours 50 % plus vite. Attention à ne pas foncer dans un trou !'],
       flask: ['Outre d’eau', () => 'Une vie en plus ! Les ennemis vaincus en lâchent parfois une.'],
-      gem: ['Gemmes d’ennemis', () => 'Turquoise 1, topaze 3, rubis 5, diamant 25. Toutes les 100 gemmes : une vie en plus.'],
+      gem: ['Gemmes d’ennemis', () => 'Turquoise 1, topaze 3, rubis 5, diamant 25. Dépense-les à l’échoppe entre deux niveaux.'],
     },
   },
   en: {
@@ -250,7 +273,7 @@ const STR = {
     soundOn: 'Sound: on', soundOff: 'Sound: off',
     best: (b, l) => 'Record: ' + b + (l ? ' · level ' + l : ''),
     titleText: 'Reach the portal at the end of each desert. Avoid the quicksand, stomp beetles by jumping on them, hit jars from below.',
-    titleSmall: 'The fennec has 3 hearts: a hit takes half or a whole one depending on the danger, each lantern you light gives half a heart back. The prickly pear, hidden in some jars, makes it grow: the next hit shrinks it without costing a heart. The shield blocks 3 attacks from the front. Each giant scorpion defeated gives one extra heart. Every 100 gems: one extra life.',
+    titleSmall: 'The fennec has 3 hearts: a hit takes half or a whole one depending on the danger, each lantern you light gives half a heart back. The prickly pear, hidden in some jars, makes it grow: the next hit shrinks it without costing a heart. The shield blocks 3 attacks from the front. Each giant scorpion defeated gives one extra heart. Between levels, spend your gems at the shop: hearts, weapons, lives…',
     play: 'Play', cont: 'Continue', newGame: 'New game',
     contText: (l, s, n) => 'Saved game: level ' + l + ', ' + s + ' points, ' + n + (n > 1 ? ' lives.' : ' life.'),
     contSmall: 'Your progress is saved at the start of each level, on this device.',
@@ -273,6 +296,17 @@ const STR = {
     scimitar: 'Scimitar', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
+    shopTitle: g => 'Shop · ' + g + (g > 1 ? ' gems' : ' gem'),
+    shop: {
+      heal: ['Heart', 'restores 1 heart'],
+      big: ['Prickly pear', 'start big'],
+      shield: ['Shield', '3 hits from the front'],
+      sword: ['Scimitar', 'replaces the bow'],
+      bow: ['Bow', 'replaces sword and shield'],
+      maxHeart: ['Extra heart', '+1 heart for the run'],
+      life: ['Life', '+1 life'],
+    },
+    owned: 'owned',
     tips: {
       fig: ['Prickly pear', () => 'The fennec grows: the next hit only shrinks it, without costing a heart. Already big? The pear gives a heart back.'],
       heart: ['Hearts', () => 'Venom, rocks, shockwaves and blue beetles take half a heart; dangerous enemies take a whole one. At zero, you lose a life. Each lantern you light gives half a heart back.'],
@@ -283,7 +317,7 @@ const STR = {
       feather: ['Feather', () => 'For 20 seconds, you jump higher and glide down slowly.'],
       speed: ['Wind slippers', () => 'For 10 seconds, you run 50% faster. Careful not to rush into a pit!'],
       flask: ['Water flask', () => 'One extra life! Defeated enemies sometimes drop one.'],
-      gem: ['Enemy gems', () => 'Turquoise 1, topaz 3, ruby 5, diamond 25. Every 100 gems: one extra life.'],
+      gem: ['Enemy gems', () => 'Turquoise 1, topaz 3, ruby 5, diamond 25. Spend them at the shop between levels.'],
     },
   },
 };
@@ -1142,8 +1176,7 @@ function togglePause(){
 function fmtTime(f){ const s = Math.floor(f/60); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
 
 function addGem(n, pts){
-  gems += n; score += pts; gemsToLife -= n;
-  if (gemsToLife <= 0){ while (gemsToLife <= 0) { gemsToLife += 100; lives++; } sfx.life(); } else sfx.gem();
+  gems += n; score += pts; sfx.gem(); // les gemmes ne sont plus qu'une monnaie : les vies s'achètent à l'échoppe
 }
 function burst(x, y, color, n=6){
   for (let i=0;i<n;i++) particles.push({ x, y, vx:(Math.random()-0.5)*3, vy:-Math.random()*3-1, life:30, color, g:0.15 });
@@ -1180,6 +1213,7 @@ function winLevel(){
     const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang].themes[themeFor(N)]) : '';
     const hint = isBossLevel(N) ? t('hintBoss', N) : (STR[lang]['hint' + N] || t('hintMore', N));
     showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + hint, t('next', N));
+    renderShop();
   });
 }
 
