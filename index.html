@@ -114,16 +114,21 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 .overlay{overflow:auto}
 .play.sim{background:#b0341a;color:#fff3dc;box-shadow:0 4px 0 #5a1010}
 .play.sim:active{box-shadow:0 2px 0 #5a1010}
-.shop{display:grid;gap:6px;width:min(100%,46ch);margin-top:2px}
+.shop{display:grid;gap:5px;width:min(100%,660px);margin-top:0}
+.card:has(> .shop:not([hidden])){max-width:min(100%,680px);gap:6px}
+.card:has(> .shop:not([hidden])) h2{font-size:clamp(20px,4vw,30px)}
 .shop h3{margin:0;font-family:var(--display);font-weight:700;font-size:16px;color:var(--gem)}
-.shop-items{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.shop-item{display:grid;gap:0;min-width:96px;padding:5px 8px;border:2px solid var(--edge);border-radius:4px;background:var(--panel);color:var(--sand);font-family:var(--body);font-size:12px;line-height:1.25;cursor:pointer;text-align:center}
+.shop-items{display:grid;grid-template-columns:max-content repeat(4,minmax(0,1fr));gap:5px;align-items:stretch}
+.shop-cat{grid-column:1;align-self:center;justify-self:end;padding-right:4px;font-family:var(--display);font-size:12px;color:var(--dim)}
+.shop-item{display:grid;gap:0;align-content:center;white-space:nowrap;overflow:hidden;min-width:0;padding:4px 6px;border:2px solid var(--edge);border-radius:4px;background:var(--panel);color:var(--sand);font-family:var(--body);font-size:12px;line-height:1.25;cursor:pointer;text-align:center}
 .shop-item b{font-family:var(--display);font-weight:700;font-size:13px}
+.shop-item > *{overflow:hidden;text-overflow:ellipsis}
 .shop-item .price{color:var(--gem);font-family:var(--display)}
 .shop-item:disabled{opacity:.4;cursor:default}
 .shop-item:not(:disabled):hover{border-color:var(--gem)}
 .shop-item:focus-visible{outline:2px solid var(--gem);outline-offset:2px}
-@media (pointer:coarse) and (orientation:landscape){.shop-item{min-width:84px;padding:3px 6px}}
+@media (max-width:520px){.shop-items{grid-template-columns:repeat(2,minmax(0,1fr))}.shop-cat{grid-column:1/-1;justify-self:start}}
+@media (max-height:420px){.shop-item{padding:2px 5px;font-size:11px}.shop-item b{font-size:12px}.shop-item span:not(.price){display:none}.card:has(> .shop:not([hidden])) h2{font-size:20px}.card:has(> .shop:not([hidden])) .small{font-size:11px}}
 </style>
 
 <div class="wrap">
@@ -249,21 +254,22 @@ const STR = {
     simThemes: ['Désert de cendres', 'Canyon en flammes', 'Oasis morte', 'Tempête de braises'],
     shopTitle: g => 'Échoppe · ' + g + (g > 1 ? ' gemmes' : ' gemme'),
     shop: {
-      heal: ['Cœur', 'rend 1 cœur'],
+      heal: ['Cœur', '+1 cœur'],
       big: ['Figue', 'commence grand'],
       shield: ['Bouclier', '3 coups de face'],
       sword: ['Cimeterre', 'remplace l’arc'],
-      bow: ['Arc', 'remplace épée et bouclier'],
-      maxHeart: ['Cœur en plus', '+1 cœur pour la partie'],
+      bow: ['Arc', 'tir à distance'],
+      arrows: ['Flèches', 'carquois plein'],
+      upBow: ['Arc renforcé', '2 flèches, carquois 20'],
+      upSword: ['Cimeterre aiguisé', 'portée + coupe les tirs'],
+      upShield: ['Bouclier renforcé', '5 coups, dos protégé'],
       life: ['Vie', '+1 vie'],
-      arrows: ['Flèches', 'remplit le carquois'],
-      upBow: ['Arc renforcé', '2 flèches par tir, carquois de 20'],
-      upSword: ['Cimeterre aiguisé', 'plus long, coupe les tirs'],
-      upShield: ['Bouclier renforcé', '5 coups, protège aussi le dos'],
-      feather: ['Plume', '20 s au début du niveau'],
-      speed: ['Babouches', '10 s au début du niveau'],
+      feather: ['Plume', '20 s, saut plané'],
+      speed: ['Babouches', '10 s, plus rapide'],
+      maxHeart: ['Cœur en plus', '+1 cœur max'],
     },
     owned: 'déjà là', locked: 'à découvrir',
+    shopCats: { care: 'Soins', items: 'Objets', weapons: 'Armes', up: 'Améliorations' },
     tips: {
       fig: ['Figue de barbarie', () => 'Le fennec grandit : le prochain coup le fait juste rapetisser, sans perdre de cœur. Déjà grand ? La figue rend un cœur.'],
       heart: ['Cœurs', () => 'Venin, pierres, ondes de choc et scarabées bleus retirent un demi-cœur ; les ennemis dangereux, un cœur entier. À zéro, tu perds une vie. Chaque lanterne allumée rend un demi-cœur.'],
@@ -322,21 +328,22 @@ const STR = {
     simThemes: ['Desert of ash', 'Burning canyon', 'Dead oasis', 'Ember storm'],
     shopTitle: g => 'Shop · ' + g + (g > 1 ? ' gems' : ' gem'),
     shop: {
-      heal: ['Heart', 'restores 1 heart'],
+      heal: ['Heart', '+1 heart'],
       big: ['Prickly pear', 'start big'],
       shield: ['Shield', '3 hits from the front'],
       sword: ['Scimitar', 'replaces the bow'],
-      bow: ['Bow', 'replaces sword and shield'],
-      maxHeart: ['Extra heart', '+1 heart for the run'],
+      bow: ['Bow', 'ranged shots'],
+      arrows: ['Arrows', 'full quiver'],
+      upBow: ['Strong bow', '2 arrows, quiver of 20'],
+      upSword: ['Sharp scimitar', 'reach + cuts shots'],
+      upShield: ['Strong shield', '5 hits, guards your back'],
       life: ['Life', '+1 life'],
-      arrows: ['Arrows', 'fills the quiver'],
-      upBow: ['Strong bow', '2 arrows per shot, quiver of 20'],
-      upSword: ['Sharp scimitar', 'longer, cuts through shots'],
-      upShield: ['Strong shield', '5 hits, also guards your back'],
-      feather: ['Feather', '20 s at the start of the level'],
-      speed: ['Wind slippers', '10 s at the start of the level'],
+      feather: ['Feather', '20 s, gliding jumps'],
+      speed: ['Wind slippers', '10 s, faster'],
+      maxHeart: ['Extra heart', '+1 max heart'],
     },
     owned: 'owned', locked: 'not found yet',
+    shopCats: { care: 'Care', items: 'Items', weapons: 'Weapons', up: 'Upgrades' },
     tips: {
       fig: ['Prickly pear', () => 'The fennec grows: the next hit only shrinks it, without costing a heart. Already big? The pear gives a heart back.'],
       heart: ['Hearts', () => 'Venom, rocks, shockwaves and blue beetles take half a heart; dangerous enemies take a whole one. At zero, you lose a life. Each lantern you light gives half a heart back.'],
@@ -1258,19 +1265,19 @@ const found = k => simoun || runFound.has(k);
 function shopItems(){
   const extra = (maxHp - 12) / 4;
   return [
-    { id: 'heal', price: 12 + 6 * healBought, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 4); healBought++; } },
-    { id: 'big', key: 'fig', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
-    { id: 'shield', key: 'shield', price: 20, ok: p.shield < shieldMax(), owned: p.shield >= shieldMax(), buy(){ p.shield = shieldMax(); p.bow = false; } },
-    { id: 'sword', key: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
-    { id: 'bow', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); } },
-    { id: 'arrows', key: 'bow', price: 15, ok: p.bow && arrowsLeft < arrowsMax(), owned: false, buy(){ arrowsLeft = arrowsMax(); } },
-    { id: 'upBow', key: 'bow', price: 200, ok: !upBow, owned: upBow, buy(){ upBow = true; if (p.bow) arrowsLeft = arrowsMax(); } },
-    { id: 'upSword', key: 'sword', price: 200, ok: !upSword, owned: upSword, buy(){ upSword = true; } },
-    { id: 'upShield', key: 'shield', price: 150, ok: !upShield, owned: upShield, buy(){ upShield = true; if (p.shield > 0) p.shield = shieldMax(); } },
-    { id: 'feather', key: 'feather', price: 30, ok: !buyFeather, owned: buyFeather, buy(){ buyFeather = true; } },
-    { id: 'speed', key: 'speed', price: 25, ok: !buySpeed, owned: buySpeed, buy(){ buySpeed = true; } },
-    { id: 'life', price: 100, ok: true, owned: false, buy(){ lives++; sfx.life(); } },
-    { id: 'maxHeart', key: 'maxHeart', price: 150 + 40 * extra, ok: maxHp < 24, owned: maxHp >= 24, buy(){ maxHp += 4; hp = Math.min(maxHp, hp + 4); } },
+    { id: 'heal', cat: 'care', price: 12 + 6 * healBought, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 4); healBought++; } },
+    { id: 'big', cat: 'items', key: 'fig', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
+    { id: 'shield', cat: 'items', key: 'shield', price: 20, ok: p.shield < shieldMax(), owned: p.shield >= shieldMax(), buy(){ p.shield = shieldMax(); p.bow = false; } },
+    { id: 'sword', cat: 'weapons', key: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
+    { id: 'bow', cat: 'weapons', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); } },
+    { id: 'arrows', cat: 'weapons', key: 'bow', price: 15, ok: p.bow && arrowsLeft < arrowsMax(), owned: false, buy(){ arrowsLeft = arrowsMax(); } },
+    { id: 'upBow', cat: 'up', key: 'bow', price: 200, ok: !upBow, owned: upBow, buy(){ upBow = true; if (p.bow) arrowsLeft = arrowsMax(); } },
+    { id: 'upSword', cat: 'up', key: 'sword', price: 200, ok: !upSword, owned: upSword, buy(){ upSword = true; } },
+    { id: 'upShield', cat: 'up', key: 'shield', price: 150, ok: !upShield, owned: upShield, buy(){ upShield = true; if (p.shield > 0) p.shield = shieldMax(); } },
+    { id: 'feather', cat: 'items', key: 'feather', price: 30, ok: !buyFeather, owned: buyFeather, buy(){ buyFeather = true; } },
+    { id: 'speed', cat: 'items', key: 'speed', price: 25, ok: !buySpeed, owned: buySpeed, buy(){ buySpeed = true; } },
+    { id: 'life', cat: 'care', price: 100, ok: true, owned: false, buy(){ lives++; sfx.life(); } },
+    { id: 'maxHeart', cat: 'care', key: 'maxHeart', price: 150 + 40 * extra, ok: maxHp < 24, owned: maxHp >= 24, buy(){ maxHp += 4; hp = Math.min(maxHp, hp + 4); } },
   ];
 }
 function renderShop(){
@@ -1278,7 +1285,11 @@ function renderShop(){
   shopEl.replaceChildren();
   const h = document.createElement('h3'); h.textContent = t('shopTitle', gems); shopEl.append(h);
   const row = document.createElement('div'); row.className = 'shop-items';
-  for (const it of shopItems()){
+  const CATS = ['care', 'items', 'weapons', 'up'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'upSword', 'upBow', 'upShield'];
+  const list = shopItems().sort((a, b) => CATS.indexOf(a.cat) - CATS.indexOf(b.cat) || ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+  let cat = null;
+  for (const it of list){
+    if (it.cat !== cat){ cat = it.cat; const c = document.createElement('span'); c.className = 'shop-cat'; c.textContent = STR[lang].shopCats[cat]; row.append(c); }
     const locked = it.key && !found(it.key);
     const [name, desc] = locked ? ['???', t('locked')] : STR[lang].shop[it.id];
     const b = document.createElement('button'); b.type = 'button'; b.className = 'shop-item';
