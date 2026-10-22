@@ -1163,10 +1163,48 @@ function menuAction(){
 playBtn.addEventListener('click', menuAction);
 altBtn.addEventListener('click', () => { if (state === 'pause') quitToTitle(); else { clearSave(); startRun(); } });
 
+/* ---------- échoppe entre les niveaux : les gemmes servent de monnaie ---------- */
+const shopEl = document.getElementById('shop');
+function shopItems(){
+  const extra = (maxHp - 6) / 2;
+  return [
+    { id: 'heal', price: 12, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 2); } },
+    { id: 'big', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
+    { id: 'shield', price: 20, ok: p.shield < 3, owned: p.shield >= 3, buy(){ p.shield = 3; p.bow = false; } },
+    { id: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
+    { id: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; } },
+    { id: 'life', price: 100, ok: true, owned: false, buy(){ lives++; sfx.life(); } },
+    { id: 'maxHeart', price: 150 + 40 * extra, ok: maxHp < 12, owned: maxHp >= 12, buy(){ maxHp += 2; hp = Math.min(maxHp, hp + 2); } },
+  ];
+}
+function renderShop(){
+  if (!p) return;
+  shopEl.replaceChildren();
+  const h = document.createElement('h3'); h.textContent = t('shopTitle', gems); shopEl.append(h);
+  const row = document.createElement('div'); row.className = 'shop-items';
+  for (const it of shopItems()){
+    const [name, desc] = STR[lang].shop[it.id];
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'shop-item';
+    b.disabled = !it.ok || gems < it.price;
+    const nb = document.createElement('b'); nb.textContent = name;
+    const ds = document.createElement('span'); ds.textContent = desc;
+    const pr = document.createElement('span'); pr.className = 'price'; pr.textContent = it.owned ? t('owned') : '◆ ' + it.price;
+    b.append(nb, ds, pr);
+    b.addEventListener('click', () => {
+      if (b.disabled || gems < it.price || !it.ok) return;
+      gems -= it.price; it.buy(); sfx.swordGet();
+      runStart = snapshot(level + 1, p.big, p.shield, p.sword, p.bow); writeSave(runStart); // achat enregistré tout de suite
+      last = {}; if (ovRender) ovRender();
+    });
+    row.append(b);
+  }
+  shopEl.append(row); shopEl.hidden = false;
+}
 function showOverlay(title, text, small, btn, alt){
   ovTip.hidden = !(state === 'title' && typeof showIosTip !== 'undefined' && showIosTip); if (!ovTip.hidden) ovTip.textContent = t('iosTip');
   ovTitle.textContent = title; ovText.textContent = text; ovSmall.textContent = small; playBtn.textContent = btn;
   altBtn.hidden = !alt; if (alt) altBtn.textContent = alt;
+  shopEl.hidden = true;
   overlay.hidden = false; playBtn.focus({preventScroll:true});
 }
 function togglePause(){
