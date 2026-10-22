@@ -202,7 +202,7 @@ const STR = {
     soundOn: 'Son : oui', soundOff: 'Son : non',
     best: (b, l) => 'Record : ' + b + (l ? ' · niveau ' + l : ''),
     titleText: 'Rejoins le portail au bout de chaque désert. Évite les sables mouvants, écrase les scarabées en leur sautant dessus, frappe les jarres par en dessous.',
-    titleSmall: 'Certaines jarres cachent une figue de barbarie : le fennec grandit et encaisse un coup. Le bouclier arrête 3 attaques venues de face, venin compris. Les ennemis vaincus lâchent des gemmes, plus précieuses s’ils sont dangereux. Toutes les 100 gemmes : une vie en plus.',
+    titleSmall: 'Le fennec a 3 cœurs : un coup en retire un demi ou un entier selon le danger, chaque lanterne allumée en rend un demi. La figue de barbarie, cachée dans certaines jarres, le fait grandir : le coup suivant le rapetisse sans lui coûter de cœur. Le bouclier arrête 3 attaques de face. Chaque scorpion géant vaincu donne un cœur de plus. Toutes les 100 gemmes : une vie en plus.',
     play: 'Jouer', cont: 'Continuer', newGame: 'Nouvelle partie',
     contText: (l, s, n) => 'Partie en cours : niveau ' + l + ', ' + s + ' points, ' + n + (n > 1 ? ' vies.' : ' vie.'),
     contSmall: 'Ta progression est enregistrée au début de chaque niveau, sur cet appareil.',
@@ -214,18 +214,21 @@ const STR = {
     hint2: 'Niveau 2 : arrivée des cobras, qui crachent du venin quand tu approches. Saute par-dessus, ou trouve le bouclier caché dans le niveau.',
     hint3: 'Niveau 3 : scarabées rouges rapides, îlots dans les sables, et des vautours qui crient avant de piquer sur toi. Un cimeterre est peut-être caché : touche X pour frapper.',
     hint4: "Niveau 4 : scarabées en patrouille à deux, et sable lourd (plus sombre) qui ralentit fortement. Nouvelle arme : l'arc, qui tire à distance mais remplace l'épée et le bouclier.",
+    hint7: 'Niveau 7 : les gerboises avancent par bonds et sautent vers toi quand tu approches. Écrase-les à la retombée, ou passe sous leur saut.',
     hint11: 'Niveau 11 : le chacal te repère de loin et te poursuit en sautant les obstacles. Saute-lui dessus ou distance-le.',
     hint12: 'Niveau 12 : le scorpion noir a une carapace à piques, ne lui saute pas dessus ! Frappe-le à l’épée, à l’arc ou par une jarre, ou esquive sa charge.',
     hint14: 'Niveau 14 : le golem de grès encaisse deux coups et frappe le sol. Saute par-dessus ses ondes de choc.',
     hint6: 'Niveau 6 : des vers des sables surgissent du sable lourd. Quand des bulles apparaissent, éloigne-toi ou prépare-toi à frapper.',
-    hintBoss: l => 'Niveau ' + l + ' : combat contre le scorpion géant. Il charge et lance des pierres. Saute-lui sur le dos quand il est sonné contre un mur.',
+    hintBoss: l => 'Niveau ' + l + ' : combat contre le scorpion géant. Il charge et lance des pierres. Saute-lui sur le dos quand il est sonné contre un mur. Le vaincre te donne un cœur de plus.',
     hintMore: l => 'Niveau ' + l + ' : un désert plus long, plus de scarabées, plus rapides.',
     biome: n => 'Nouveau décor : ' + n + '. ',
     scimitar: 'Cimeterre', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
     tips: {
-      fig: ['Figue de barbarie', () => 'Le fennec grandit : il peut encaisser un coup sans perdre de vie. Le coup le fait redevenir petit.'],
+      fig: ['Figue de barbarie', () => 'Le fennec grandit : le prochain coup le fait juste rapetisser, sans perdre de cœur. Déjà grand ? La figue rend un cœur.'],
+      heart: ['Cœurs', () => 'Venin, pierres, ondes de choc et scarabées bleus retirent un demi-cœur ; les ennemis dangereux, un cœur entier. À zéro, tu perds une vie. Chaque lanterne allumée rend un demi-cœur.'],
+      maxHeart: ['Cœur du scorpion', () => 'Un cœur de plus pour toute la partie, et tous tes cœurs sont restaurés.'],
       shield: ['Bouclier', () => 'Il arrête 3 attaques venues de face, venin compris. Fais face au danger : un coup dans le dos passe quand même.'],
       sword: ['Cimeterre', m => (m ? 'Bouton ÉPÉE' : 'Touche X') + ' pour frapper. Il tue d’un coup, mais ralentit ta course et n’arrête pas le venin.'],
       bow: ['Arc', m => (m ? 'Bouton ARC' : 'Touche X') + ' pour tirer : les flèches tuent à distance. L’arc remplace l’épée et le bouclier.'],
@@ -247,7 +250,7 @@ const STR = {
     soundOn: 'Sound: on', soundOff: 'Sound: off',
     best: (b, l) => 'Record: ' + b + (l ? ' · level ' + l : ''),
     titleText: 'Reach the portal at the end of each desert. Avoid the quicksand, stomp beetles by jumping on them, hit jars from below.',
-    titleSmall: 'Some jars hide a prickly pear: the fennec grows and can take one hit. The shield blocks 3 attacks from the front, venom included. Defeated enemies drop gems, worth more the more dangerous they are. Every 100 gems: one extra life.',
+    titleSmall: 'The fennec has 3 hearts: a hit takes half or a whole one depending on the danger, each lantern you light gives half a heart back. The prickly pear, hidden in some jars, makes it grow: the next hit shrinks it without costing a heart. The shield blocks 3 attacks from the front. Each giant scorpion defeated gives one extra heart. Every 100 gems: one extra life.',
     play: 'Play', cont: 'Continue', newGame: 'New game',
     contText: (l, s, n) => 'Saved game: level ' + l + ', ' + s + ' points, ' + n + (n > 1 ? ' lives.' : ' life.'),
     contSmall: 'Your progress is saved at the start of each level, on this device.',
@@ -259,18 +262,21 @@ const STR = {
     hint2: 'Level 2: cobras arrive and spit venom when you get close. Jump over it, or find the shield hidden in the level.',
     hint3: 'Level 3: fast red beetles, islands in the quicksand, and vultures that screech before diving at you. A scimitar may be hidden: press X to strike.',
     hint4: 'Level 4: beetles patrol in pairs, and heavy sand (darker) slows you down a lot. New weapon: the bow shoots from a distance, but it replaces the sword and the shield.',
+    hint7: 'Level 7: jerboas move in hops and leap at you when you get close. Stomp them as they land, or slip under their jump.',
     hint11: 'Level 11: the jackal spots you from afar and chases you, jumping over obstacles. Stomp it or outrun it.',
     hint12: 'Level 12: the black scorpion has a spiked shell, do not jump on it! Hit it with the sword, the bow or a jar, or dodge its charge.',
     hint14: 'Level 14: the sandstone golem takes two hits and pounds the ground. Jump over its shockwaves.',
     hint6: 'Level 6: sandworms burst out of the heavy sand. When bubbles appear, move away or get ready to strike.',
-    hintBoss: l => 'Level ' + l + ': fight the giant scorpion. It charges and throws rocks. Jump on its back while it is stunned against a wall.',
+    hintBoss: l => 'Level ' + l + ': fight the giant scorpion. It charges and throws rocks. Jump on its back while it is stunned against a wall. Beating it gives you one extra heart.',
     hintMore: l => 'Level ' + l + ': a longer desert, more beetles, and faster ones.',
     biome: n => 'New scenery: ' + n + '. ',
     scimitar: 'Scimitar', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
     tips: {
-      fig: ['Prickly pear', () => 'The fennec grows: it can take one hit without losing a life. That hit makes it small again.'],
+      fig: ['Prickly pear', () => 'The fennec grows: the next hit only shrinks it, without costing a heart. Already big? The pear gives a heart back.'],
+      heart: ['Hearts', () => 'Venom, rocks, shockwaves and blue beetles take half a heart; dangerous enemies take a whole one. At zero, you lose a life. Each lantern you light gives half a heart back.'],
+      maxHeart: ['Scorpion heart', () => 'One extra heart for the rest of the run, and all your hearts are restored.'],
       shield: ['Shield', () => 'Blocks 3 attacks from the front, venom included. Face the danger: a hit from behind still gets through.'],
       sword: ['Scimitar', m => (m ? 'SWORD button' : 'Press X') + ' to strike. It kills in one hit, but slows you down and does not stop venom.'],
       bow: ['Bow', m => (m ? 'BOW button' : 'Press X') + ' to shoot: arrows kill from a distance. The bow replaces the sword and the shield.'],
@@ -519,13 +525,53 @@ const BSCORP_IMG = sprite([
   "................",
 ], { k:'#1c1420', g:'#4a3a5a', w:'#e8e0f0', c:'#3a2a4a', e:'#e0473a', r:'#e0473a', l:'#2a2030' });
 const BSCORP = [BSCORP_IMG, flipped(BSCORP_IMG)];
+const JERBOA_PAL = { o:'#e3b77a', e:'#c98a4c', p:'#f2a19a', k:'#1a1010', w:'#fff3dc', d:'#b8733a', t:'#8a5a34', q:'#2a160c' };
+const JERBOA = [[ // accroupie, au sol
+  "..........ee.e..",
+  "..........epep..",
+  "..........eeee..",
+  ".........ooooo..",
+  ".........ookoop.",
+  "........ooooo...",
+  ".......oooooo...",
+  "qq.....oowww....",
+  "q.t...ooowww....",
+  "...tttoooww.....",
+  ".....dddoo......",
+  ".....dd..d......",
+], [ // en plein saut, pattes tendues
+  "..........ee.e..",
+  "..........epep..",
+  ".........ooooo..",
+  ".........ookoop.",
+  "........ooooo...",
+  ".......oooooo...",
+  "qq....ooowww....",
+  "..tt.ooooww.....",
+  "....tooooo......",
+  "....ddd.........",
+  "..dd............",
+  ".d..............",
+]].map(r => { const sp = sprite(r, JERBOA_PAL); return [sp, flipped(sp)]; });
+const HEART_ROWS = [
+  ".kk...kk.",
+  "krrk.krrk",
+  "krhrkrrrk",
+  "krrrrrrrk",
+  ".krrrrrk.",
+  "..krrrk..",
+  "...krk...",
+  "....k....",
+];
+const HEART_FULL = sprite(HEART_ROWS, { k:'#2a160c', r:'#e0475e', h:'#ffd0da' });
+const HEART_EMPTY = sprite(HEART_ROWS, { k:'#2a160c', r:'#4a3346', h:'#5e4458' });
 const GEM_TYPES = {
   turq:    { val: 1,  pts: 10,  c: ['#1f8f86', '#3fd6c6', '#d6fffa'] },
   topaz:   { val: 3,  pts: 30,  c: ['#a8701c', '#f2b53c', '#fff2c4'] },
   ruby:    { val: 5,  pts: 50,  c: ['#8e1d3a', '#e0475e', '#ffd0da'] },
   diamond: { val: 25, pts: 250, c: ['#6f82a6', '#e6f0ff', '#ffffff'] },
 };
-const gemFor = e => e.kind === 'boss' ? 'diamond' : (e.kind === 'vulture' || e.kind === 'worm' || e.kind === 'jackal' || e.kind === 'bscorp' || e.kind === 'golem') ? 'ruby' : (e.kind === 'cobra' || e.fast) ? 'topaz' : 'turq';
+const gemFor = e => e.kind === 'boss' ? 'diamond' : (e.kind === 'vulture' || e.kind === 'worm' || e.kind === 'jackal' || e.kind === 'bscorp' || e.kind === 'golem') ? 'ruby' : (e.kind === 'cobra' || e.kind === 'jerboa' || e.fast) ? 'topaz' : 'turq';
 const SWORD = sprite([
   "...........ss.",
   ".........sssd.",
@@ -605,6 +651,8 @@ function difficulty(L){
     speedP: L >= 8 ? 0.45 : 0,
     jackalP: L >= 11 ? Math.min(0.12 + 0.03 * (L - 11), 0.35) : 0,
     bscorpP: L >= 12 ? Math.min(0.12 + 0.03 * (L - 12), 0.35) : 0,
+    jerboaP: L >= 7 ? Math.min(0.18 + 0.03 * (L - 7), 0.35) : 0,
+    jerboaV: Math.min(1.1 + 0.05 * Math.max(0, L - 7), 1.6),
     golemP: L >= 14 ? Math.min(0.1 + 0.03 * (L - 14), 0.3) : 0,
     jackalV: Math.min(1.6 + 0.04 * Math.max(0, L - 11), 2.05),
     dashV: Math.min(3 + 0.1 * Math.max(0, L - 12), 3.8),
@@ -684,6 +732,7 @@ function generate(L, seed){
       if (chance(D.jackalP)) foeSpots.push(['jackal', ri(a + 2, b - 1), h]);
       else if (chance(D.bscorpP)) foeSpots.push(['bscorp', ri(a + 2, b - 1), h]);
       else if (n >= 7 && chance(D.golemP)) foeSpots.push(['golem', Math.floor((a + b) / 2), h]);
+      if (D.jerboaP && chance(D.jerboaP)) foeSpots.push(['jerboa', ri(a + 2, b - 1), h]);
       if (chance(D.enemyP)) enemySpots.push([ri(a + 2, b - 1), h]);
       if (chance(D.pairP)) enemySpots.push([ri(a + 2, b - 1), h]);
       if (n >= 7 && h - 4 >= 3 && chance(D.ledgeP)) ledges.push([a + 2, Math.min(b - 2, a + 2 + ri(2, 4)), h - 4]);
@@ -781,7 +830,7 @@ function generate(L, seed){
     enemies.push({ kind: 'cobra', x: c * T + 1, y: row * T - 14, w: 14, h: 14, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, cd: 30, rear: 0 });
   }
   // ennemis coriaces : au moins un de chaque type à son niveau d'apparition
-  for (const [kind, from] of [['jackal', 11], ['bscorp', 12], ['golem', 14]]){
+  for (const [kind, from] of [['jerboa', 7], ['jackal', 11], ['bscorp', 12], ['golem', 14]]){
     if (L >= from && !foeSpots.some(f => f[0] === kind)){
       const f = flatSpots.filter(([c]) => c > 18 && Math.abs(c - cp.col) > 6);
       if (f.length){ const s = f[Math.floor(rnd() * f.length)]; foeSpots.push([kind, s[0], s[1]]); }
@@ -791,6 +840,7 @@ function generate(L, seed){
     if (c <= 14 || Math.abs(c - cp.col) <= 5) continue;
     if (kind === 'jackal') enemies.push({ kind, x: c * T + 1, y: row * T - 10, w: 14, h: 10, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, onGround: false, chasing: false });
     else if (kind === 'bscorp') enemies.push({ kind, x: c * T + 1, y: row * T - 9, w: 14, h: 9, vx: 0, vy: 0, dir: chance(0.5) ? -1 : 1, dead: false, t: 0, gone: false, fast: false, onGround: false, st: 'walk', cd: 0 });
+    else if (kind === 'jerboa') enemies.push({ kind, x: c * T + 2, y: row * T - 12, w: 12, h: 12, vx: 0, vy: 0, dir: chance(0.5) ? -1 : 1, dead: false, t: 0, gone: false, fast: false, onGround: false, wait: 20 + ri(0, 30) });
     else enemies.push({ kind, x: c * T - 2, y: row * T - 24, w: 20, h: 24, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, onGround: false, st: 'walk', cd: 80, hp: 2, inv: 0 });
   }
   if (L >= 3 && vultureSpots.length === 0 && flatSpots.length > 3) vultureSpots.push(flatSpots[Math.floor(flatSpots.length / 2)]);
@@ -929,6 +979,9 @@ const sfx = {
   power:()=>[659,880,1175,1568,1175,1568].forEach((f,i)=>beep(f,f,0.07,'triangle',0.06,i*0.05)),
   crack:()=>{beep(260,80,0.25,'sawtooth',0.05);},
   creak:()=>beep(180,150,0.06,'square',0.03),
+  hop:()=>beep(520,980,0.07,'sine',0.03),
+  ouch:()=>{beep(620,220,0.14,'square',0.05);},
+  heal:()=>[784,988,1318].forEach((f,i)=>beep(f,f,0.07,'triangle',0.05,i*0.06)),
   growl:()=>{beep(160,90,0.35,'sawtooth',0.05);},
   bowShot:()=>{beep(700,1400,0.06,'triangle',0.06);beep(300,120,0.08,'square',0.03);},
   worm:()=>{beep(120,260,0.3,'sawtooth',0.05);},
@@ -988,6 +1041,7 @@ bindPad('padL','left'); bindPad('padR','right'); bindPad('padJ','jump'); bindPad
 /* ---------- State ---------- */
 let state = 'title', p = null, camX = 0, score = 0, gems = 0, lives = 3, gemsToLife = 100, frames = 0, particles = [], tick = 0;
 let level = 1, runSeed = 1;
+let hp = 6, maxHp = 6; // en demi-cœurs : 6 = 3 cœurs
 const overlay = document.getElementById('overlay'), altBtn = document.getElementById('altBtn');
 const ovTitle = document.getElementById('ovTitle'), ovText = document.getElementById('ovText'), ovSmall = document.getElementById('ovSmall'), playBtn = document.getElementById('playBtn');
 const hShield = document.getElementById('hShield'), hWeapon = document.getElementById('hWeapon'), padA = document.getElementById('padA'), hPower = document.getElementById('hPower');
@@ -1024,11 +1078,12 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed }; }
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, hp, maxHp }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
+  maxHp = sv.maxHp || 6; hp = Math.min(sv.hp || maxHp, maxHp);
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
@@ -1061,7 +1116,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
 function startRun(){
   initAudio();
   runSeed = Math.floor(Math.random() * 1e9);
-  score = 0; gems = 0; lives = 3; gemsToLife = 100;
+  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 6;
   loadLevel(1, false);
 }
 function menuAction(){
@@ -1110,8 +1165,8 @@ function loseLife(){
     const L0 = level, S0 = score, G0 = gems;
     ui(() => showOverlay(t('overTitle'), t('overText', L0, S0, G0), wasBest ? t('newRecord') : t('record', best, bestLevel), t('newGame')));
   } else {
-    spawnPlayer(false); resetBossFight();
-    if (runStart){ runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; writeSave(runStart); }
+    hp = maxHp; spawnPlayer(false); resetBossFight();
+    if (runStart){ runStart.hp = hp; runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; writeSave(runStart); }
   }
 }
 function winLevel(){
@@ -1167,6 +1222,8 @@ function useShield(){
   burst(p.x + (p.face === 0 ? p.w : 0), p.y + p.h/2, '#f2c46a', 6);
   if (p.shield === 0){ sfx.shieldBreak(); burst(p.x + p.w/2, p.y + p.h/2, '#c98a3a', 10); }
 }
+// ½ cœur pour les petits ennemis, 1 cœur pour les dangereux
+const dmgFor = e => (e.kind === 'beetle' && !e.fast) || e.kind === 'cobra' ? 1 : 2;
 function contactHit(e){
   if (p.shield > 0 && p.atk <= 0 && facing(e)){ // bouclier baissé pendant un coup d'épée
     useShield();
@@ -1174,7 +1231,7 @@ function contactHit(e){
     if (e.kind === 'beetle'){ e.dir = away; e.x += away * 6; }
     if (e.kind === 'boss') p.vx = -away * 3.5;
     p.vx = -away * 2.2; p.inv = 30;
-  } else hurt();
+  } else hurt(dmgFor(e));
 }
 function updateCobra(e){
   const dx = (p.x + p.w/2) - (e.x + e.w/2), dy = (p.y + p.h) - (e.y + e.h);
@@ -1236,6 +1293,7 @@ function damageBoss(n, stomp){
 }
 function bossReward(){
   const b = boss, gx = b.x + b.w/2;
+  if (maxHp < 12) maxHp += 2; hp = maxHp; tip('maxHeart'); burst(p.x + p.w/2, p.y, '#ff8fa3', 16); // cœur du scorpion : +1 cœur pour la partie
   drops.push({ x: gx - 20, y: b.y - 10, w: 10, h: 10, vy: -4, life: 99999, gone: false, onGround: false });
   const y = 12 * T - 13;
   gemDrops.push(makeGem(gx, b.y, 'diamond'));
@@ -1380,6 +1438,39 @@ function updateJackal(e){
   e.vy = Math.min(e.vy + GRAV, 6); moveY(e, e.vy);
   if (e.y > H*T || inQuicksand(e)) e.gone = true;
 }
+/* ---------- gerboise : avance par bonds, saute vers le fennec quand il est proche ---------- */
+function jerboaSafe(e, reach, maxRise){
+  const row = Math.floor((e.y + e.h + 1) / T); // rang de la tuile sous ses pattes
+  const x0 = e.dir > 0 ? e.x + e.w : e.x;
+  for (let d = 0; d <= reach + T; d += 4){
+    const g = groundTop[Math.floor((x0 + e.dir * d) / T)];
+    if (g === null || g === undefined) return false; // jamais de bond vers les sables mouvants
+    if (g < row - maxRise) return false;             // marche trop haute pour ce bond
+  }
+  return true;
+}
+function updateJerboa(e){
+  const D = difficulty(level);
+  const dx = (p.x + p.w/2) - (e.x + e.w/2), dy = (p.y + p.h) - (e.y + e.h);
+  const near = !p.dying && Math.abs(dx) < 6 * T && Math.abs(dy) < 3 * T;
+  if (e.onGround){
+    e.vx = 0;
+    if (near) e.dir = dx > 0 ? 1 : -1;
+    if (--e.wait <= 0){
+      const big = near || Math.random() < 0.35;
+      const vy = big ? -6 : -4.4, vx = D.jerboaV * (big ? 1.25 : 1);
+      if (jerboaSafe(e, vx * (-2 * vy / GRAV), big ? 2 : 1)){
+        e.vy = vy; e.vx = e.dir * vx; sfx.hop();
+        e.wait = near ? 14 : 22 + Math.floor(Math.random() * 20);
+      } else if (near) e.wait = 20;       // attend le fennec au bord du trou
+      else { e.dir *= -1; e.wait = 12; }  // fait demi-tour
+    }
+  }
+  if (moveX(e, e.vx)){ e.dir *= -1; e.vx = -e.vx; } // rebondit contre un mur
+  e.vy = Math.min(e.vy + GRAV, 6); moveY(e, e.vy);
+  if (e.onGround) e.vx = 0;
+  if (e.y > H*T || inQuicksand(e)) e.gone = true;
+}
 function updateBScorp(e){
   const D = difficulty(level);
   const dx = (p.x + p.w/2) - (e.x + e.w/2), dy = (p.y + p.h) - (e.y + e.h);
@@ -1433,7 +1524,7 @@ function updateWorm(e){
 function loot(e){
   if (e.kind !== 'boss') gemDrops.push(makeGem(e.x + e.w/2, e.y, gemFor(e)));
   if (dropsLeft <= 0) return;
-  const pr = (e.kind === 'vulture' || e.kind === 'worm' || e.kind === 'jackal' || e.kind === 'bscorp' || e.kind === 'golem') ? 0.12 : e.kind === 'cobra' ? 0.06 : e.fast ? 0.04 : 0.02;
+  const pr = (e.kind === 'vulture' || e.kind === 'worm' || e.kind === 'jackal' || e.kind === 'bscorp' || e.kind === 'golem') ? 0.12 : (e.kind === 'cobra' || e.kind === 'jerboa') ? 0.06 : e.fast ? 0.04 : 0.02;
   if (Math.random() < pr){
     dropsLeft--;
     drops.push({ x: e.x + e.w/2 - 5, y: e.y - 4, w: 10, h: 10, vy: -3, life: 720, gone: false, onGround: false });
@@ -1458,17 +1549,26 @@ function updateShots(){
       s.gone = true; burst(s.x + 3, s.y + 2, '#9be15d', 6);
       const fromFront = (s.vx < 0) === (p.face === 0);
       if (p.shield > 0 && p.atk <= 0 && fromFront) useShield();
-      else if (p.inv <= 0) hurt();
+      else if (p.inv <= 0) hurt(1); // venin, pierres, ondes de choc : ½ cœur
     }
   }
   shots = shots.filter(s => !s.gone);
 }
-function hurt(){
+function hurt(dmg = 2){
   if (p.big){
     p.big = false; p.pendingGrow = false; p.growT = 0;
     p.x += (BIG_W - SMALL_W)/2; p.y += BIG_H - SMALL_H; p.w = SMALL_W; p.h = SMALL_H;
     p.inv = 120; sfx.shrink(); burst(p.x + p.w/2, p.y, '#ffe6a8', 8);
-  } else killPlayer(false);
+  } else {
+    hp -= dmg; tip('heart');
+    if (hp <= 0){ hp = 0; killPlayer(false); }
+    else { p.inv = 100; sfx.ouch(); burst(p.x + p.w/2, p.y + 4, '#e0475e', 8); p.vy = Math.min(p.vy, -3); }
+  }
+}
+function heal(n){
+  if (hp >= maxHp) return false;
+  hp = Math.min(maxHp, hp + n); sfx.heal(); burst(p.x + p.w/2, p.y, '#ff8fa3', 8);
+  return true;
 }
 function inQuicksand(e){
   const fy = Math.floor((e.y + e.h - 3) / T);
@@ -1538,7 +1638,7 @@ function updatePlayer(){
   if (p.pendingGrow) tryGrow();
   if (inQuicksand(p) || p.y > H*T + 24) killPlayer(true);
 
-  if (!checkpoint.lit && p.x > checkpoint.x){ checkpoint.lit = true; sfx.lamp(); burst(checkpoint.x+8, checkpoint.top*T-34, '#ffd27a', 12); }
+  if (!checkpoint.lit && p.x > checkpoint.x){ checkpoint.lit = true; sfx.lamp(); burst(checkpoint.x+8, checkpoint.top*T-34, '#ffd27a', 12); heal(1); }
   if (portal.active !== false && overlap(p, portal, 6)) winLevel();
 
   p.anim = p.onGround && Math.abs(p.vx) > 0.2 ? p.anim + Math.abs(p.vx)*0.09 : 0;
@@ -1559,6 +1659,7 @@ function updateEnemies(){
     else if (e.kind === 'jackal') updateJackal(e);
     else if (e.kind === 'bscorp') updateBScorp(e);
     else if (e.kind === 'golem') updateGolem(e);
+    else if (e.kind === 'jerboa') updateJerboa(e);
     else {
       e.vx = e.dir * e.speed;
       if (moveX(e, e.vx)) e.dir *= -1;
@@ -1572,7 +1673,7 @@ function updateEnemies(){
     }
     if (!p.dying && overlap(p, e, 1) && p.vy > 0 && (p.y + p.h) - e.y < 9 && (e.kind === 'bscorp' || e.kind === 'golem')){
       p.coyote = 0;
-      if (e.kind === 'bscorp'){ p.vy = -5.5; burst(p.x + p.w/2, p.y + p.h, '#e8e0f0', 6); if (p.inv <= 0) hurt(); } // carapace à piques
+      if (e.kind === 'bscorp'){ p.vy = -5.5; burst(p.x + p.w/2, p.y + p.h, '#e8e0f0', 6); if (p.inv <= 0) hurt(2); } // carapace à piques
       else { p.vy = keys.jump ? -7.8 : -6; p.vx = (p.x + p.w/2 < e.x + e.w/2 ? -1 : 1) * 2.2; hitEnemy(e, 1); }
       continue;
     }
@@ -1580,7 +1681,7 @@ function updateEnemies(){
       if (p.vy > 0 && (p.y + p.h) - e.y < 9){
         e.dead = true; e.t = 30; e.flip = e.kind === 'vulture'; e.vy = 0; loot(e);
         p.vy = keys.jump ? -7.8 : -4.8; p.coyote = 0;
-        score += (e.fast || e.kind !== 'beetle') ? 200 : 100; sfx.stomp(); burst(e.x+7, e.y+5, e.kind === 'cobra' ? '#c9a227' : e.kind === 'vulture' ? '#efe6da' : e.kind === 'worm' ? '#d9a07a' : e.fast ? '#f0806a' : '#8f7be0', 6);
+        score += (e.fast || e.kind !== 'beetle') ? 200 : 100; sfx.stomp(); burst(e.x+7, e.y+5, e.kind === 'cobra' ? '#c9a227' : e.kind === 'vulture' ? '#efe6da' : e.kind === 'worm' ? '#d9a07a' : e.kind === 'jerboa' ? '#e3b77a' : e.fast ? '#f0806a' : '#8f7be0', 6);
       } else if (p.inv <= 0) contactHit(e);
     }
   }
@@ -1600,7 +1701,7 @@ function updateItems(){
       tip(it.kind === 'feather' ? 'feather' : it.kind === 'speed' ? 'speed' : 'fig');
       if (it.kind === 'feather'){ p.feather = 1200; score += 500; sfx.power(); burst(it.x + 6, it.y + 5, '#f4f8ff', 12); }
       else if (it.kind === 'speed'){ p.speedT = 600; score += 500; sfx.power(); burst(it.x + 6, it.y + 5, '#f5a34a', 12); }
-      else { score += 1000; burst(it.x + 6, it.y + 5, '#f69ab8', 10); if (p.big || p.pendingGrow) sfx.life(); else tryGrow(); }
+      else { score += 1000; burst(it.x + 6, it.y + 5, '#f69ab8', 10); if (p.big || p.pendingGrow){ if (!heal(2)) sfx.life(); } else tryGrow(); }
     }
   }
 }
@@ -1855,6 +1956,18 @@ function drawGolem(e, x){
   if (e.hp < 2){ ctx.fillStyle = '#3a1a10'; ctx.fillRect(x + 8, y + 10, 1, 6); ctx.fillRect(x + 9, y + 15, 3, 1); ctx.fillRect(x + 12, y + 16, 1, 4); ctx.fillRect(x + 6, y + 1, 1, 3); }
   ctx.globalAlpha = 1;
 }
+function drawHearts(){
+  if (!p || state === 'title') return;
+  const n = maxHp / 2, flash = p.inv > 0 && !p.big && Math.floor(tick / 6) % 2;
+  ctx.fillStyle = 'rgba(27,19,32,.55)'; ctx.fillRect(3, 3, n * 11 + 5, 14);
+  for (let i = 0; i < n; i++){
+    const x = 6 + i * 11, y = 6, v = hp - i * 2;
+    ctx.drawImage(HEART_EMPTY, x, y);
+    if (v >= 2) ctx.drawImage(HEART_FULL, x, y);
+    else if (v === 1) ctx.drawImage(HEART_FULL, 0, 0, 5, 8, x, y, 5, 8); // demi-cœur
+    if (flash && v > 0 && v <= 2){ ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x + 1, y + 1, 7, 5); }
+  }
+}
 function drawCheckpoint(){
   const x = Math.round(checkpoint.x - camX), base = checkpoint.top*T;
   if (x < -40 || x > VW + 40) return;
@@ -1909,6 +2022,7 @@ function draw(){
     if (e.kind === 'cobra'){ img = (e.rear > 0 ? COBRA.rear : COBRA.idle)[e.dir > 0 ? 0 : 1]; if (e.rear > 0 && e.rear % 4 < 2) sx += 1; }
     else if (e.kind === 'vulture'){ const fr = (e.state === 'dive' || e.dead) ? 0 : Math.floor(tick / (e.state === 'warn' ? 4 : 9)) % 2; img = VULT[fr][e.dir > 0 ? 0 : 1]; }
     else if (e.kind === 'jackal') img = JACKAL[Math.abs(e.vx) > 0.3 && e.onGround ? Math.floor(tick / 5) % 2 : 0][e.dir > 0 ? 0 : 1];
+    else if (e.kind === 'jerboa'){ img = JERBOA[e.onGround || e.dead ? 0 : 1][e.dir > 0 ? 0 : 1]; sx -= 1; }
     else if (e.kind === 'bscorp'){ img = BSCORP[e.dir > 0 ? 0 : 1]; if (e.st === 'warn' && e.t % 4 < 2) sx += 1; }
     else img = (e.fast ? BUG_FAST : BUG)[Math.floor(tick / (e.fast ? 6 : 10)) % 2];
     if (e.dead && !e.flip){ ctx.drawImage(img, 0, 0, img.width, img.height, ex, ey + e.h - 4, 16, 4); }
@@ -2028,6 +2142,7 @@ function draw(){
       ctx.fillText(t('boss'), x0, y0 - 2);
     }
   }
+  drawHearts();
   for (const k in crumble){ const c = crumble[k]; if (c.st === 'gone' && c.fy < H * T) drawPlank(c.tx * T - cx, Math.round(c.fy), true); }
   if (TH.storm) drawDust(0.22);
   // quicksand drawn last so the fennec sinks into it
