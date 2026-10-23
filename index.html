@@ -468,6 +468,8 @@ const LEGS = {
   idle:[".....oo...oo....","....dd...dd.....","................"],
   run1:["...oo......oo...","..dd.......dd...","................"],
   run2:["......oooo......","......dddd......","................"],
+  run3:["..oo........oo..","..d..........d..","................"],
+  run4:[".......oooo.....",".......dd.dd....","................"],
   jump:["...oo....oo.....","...d......d.....","................"],
 };
 const FOX = {};
@@ -730,6 +732,7 @@ const BOSS = [BOSS_IMG, flipped(BOSS_IMG)];
 function tinted(src, col){ const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d'); x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height); return c; }
 const BOSS_TWIN_IMG = tinted(BOSS_IMG, 'rgba(110,10,30,.5)'); // le second scorpion, plus sombre
 const BOSS_TWIN = [BOSS_TWIN_IMG, flipped(BOSS_TWIN_IMG)];
+const BOSS_WHITE_IMG = tinted(BOSS_IMG, '#ffffff'), BOSS_WHITE = [BOSS_WHITE_IMG, flipped(BOSS_WHITE_IMG)]; // flash quand il est touché
 const FLASK = sprite([
   "...kk.....",
   "...cc.....",
@@ -796,6 +799,7 @@ function difficulty(L){
 }
 
 const reduceMotion = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } })();
+let hitstop = 0; const freeze = n => { hitstop = Math.max(hitstop, n); };
 let shakeT = 0, shakeA = 0; const shake = a => { if (reduceMotion) return; shakeA = Math.max(shakeA, a); shakeT = 12; };
 let drops = [], dropsLeft = 1, boss = null, bosses = [], arena = null, gemDrops = [], arrows = [], wormTimer = 120, crumble = {};
 let W, map, groundTop, rockBase, enemies, portal, checkpoint, bumps, items = [], pickups = [], shots = [];
@@ -1708,7 +1712,7 @@ function updateMagpie(e){
 }
 function damageBoss(n, stomp){
   const b = boss;
-  b.hp -= n; b.inv = stomp ? 90 : 50; shake(3);
+  b.hp -= n; b.inv = stomp ? 90 : 50; b.flash = 7; shake(3); freeze(b.hp <= 0 ? 14 : 5);
   if (stomp){ b.state = 'hurt'; b.t = 60; } // un coup sur la tête le réveille : un seul coup par étourdissement score += 300; sfx.bossHit();
   burst(b.x + b.w/2, b.y, '#ffd27a', 10);
   if (b.hp <= 0){ b.hp = 0; b.dead = true; b.deathT = 0; score += 5000; sfx.bossDie(); shots = []; shake(8); }
@@ -1827,6 +1831,11 @@ function updateDjinn(b, pcx, minX, maxX){
   } else if (b.state === 'hurt'){ b.y += (floatY - 10 - b.y) * 0.08; if (--b.t <= 0){ b.state = 'float'; b.t = 60; } }
   b.x = Math.max(minX, Math.min(maxX, b.x));
 }
+function drawBossBody(b, bx, by){
+  const fl = b.flash > 0 && !b.dead; if (fl) b.flash--;
+  if (b.type === 'djinn'){ drawDjinn(b, bx + 2, by + 10); if (fl){ ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.ellipse(bx + 15, by + 22, 15, 20, 0, 0, Math.PI * 2); ctx.fill(); } }
+  else ctx.drawImage((fl ? BOSS_WHITE : b.slot ? BOSS_TWIN : BOSS)[b.dir > 0 ? 0 : 1], bx, by, 48, 28);
+}
 function drawDjinn(b, x, y){
   if (b.state === 'sleep'){ // tourbillon de sable endormi
     for (let i = 0; i < 4; i++){ ctx.fillStyle = i % 2 ? '#b07a3a' : '#d9a35f'; ctx.fillRect(x + 6 + Math.sin(tick * 0.1 + i) * 3, 12 * T - 4 - i * 3, 14 - i * 3, 3); }
@@ -1924,7 +1933,7 @@ function updateArrows(){
 /* ---------- vers des sables (sortent du sable lourd à partir du niveau 6) ---------- */
 function hitEnemy(e, dmg){
   if (e.inv > 0) return;
-  e.hp -= dmg; e.inv = 40; sfx.bossHit(); burst(e.x + e.w/2, e.y + 4, '#ffd27a', 6);
+  e.hp -= dmg; e.inv = 40; e.flash = 7; freeze(3); sfx.bossHit(); burst(e.x + e.w/2, e.y + 4, '#ffd27a', 6);
   if (e.hp <= 0){ e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 400; loot(e); loot(e); }
 }
 function groundWalk(e, vx){
@@ -2093,7 +2102,7 @@ function hurt(dmg = 4){
   } else {
     hp -= simoun ? Math.round(dmg * 1.5) : dmg; tip('heart'); // Simoun : dégâts ×1,5
     if (hp <= 0){ hp = 0; killPlayer(false); }
-    else { p.inv = 100; sfx.ouch(); shake(3); burst(p.x + p.w/2, p.y + 4, '#e0475e', 8); p.vy = Math.min(p.vy, -3); }
+    else { p.inv = 100; sfx.ouch(); shake(3); freeze(4); burst(p.x + p.w/2, p.y + 4, '#e0475e', 8); p.vy = Math.min(p.vy, -3); }
   }
 }
 function heal(n){
@@ -2223,7 +2232,7 @@ function updateEnemies(){
     }
     if (!p.dying && overlap(p, e, 1)){
       if (p.vy > 0 && (p.y + p.h) - e.y < 9){
-        e.dead = true; e.t = 30; e.flip = e.kind === 'vulture' || e.kind === 'magpie'; e.vy = 0; loot(e);
+        e.dead = true; e.t = 30; e.flip = e.kind === 'vulture' || e.kind === 'magpie'; e.vy = 0; loot(e); freeze(3); burst(e.x + e.w/2, e.y, '#ffffff', 4);
         p.vy = keys.jump ? -7.8 : -4.8; p.coyote = 0;
         score += (e.fast || e.kind !== 'beetle') ? 200 : 100; sfx.stomp(); burst(e.x+7, e.y+5, e.kind === 'cobra' ? '#c9a227' : e.kind === 'vulture' ? '#efe6da' : e.kind === 'worm' ? '#d9a07a' : e.kind === 'jerboa' ? '#e3b77a' : e.kind === 'magpie' ? '#f4f0ff' : e.fast ? '#f0806a' : '#8f7be0', 6);
       } else if (p.inv <= 0) contactHit(e);
@@ -2561,10 +2570,11 @@ function drawWorm(e, x){
   }
 }
 function drawGolem(e, x){
-  if (e.inv > 0 && Math.floor(tick / 3) % 2 && !e.dead) return;
+  if (e.inv > 0 && !(e.flash > 0) && Math.floor(tick / 3) % 2 && !e.dead) return;
   const y = Math.round(e.y), warn = e.st === 'warn', sh = warn && tick % 4 < 2 ? 1 : 0, F = e.fire;
   // golem de grès, ou golem de feu (Simoun) : corps sombre et fissures incandescentes
-  const C = F ? { body:'#3a1a14', band: tick % 20 < 10 ? '#ff7a2a' : '#ff9a3a', foot:'#2a120c', head:'#4a2218', arm:'#5a2a1a', eye:'#ffe08a' }
+  const flash = e.flash > 0 && !e.dead; if (flash) e.flash--;
+  const C = flash ? { body:'#ffffff', band:'#ffffff', foot:'#ffffff', head:'#ffffff', arm:'#ffffff', eye:'#ffffff' } : F ? { body:'#3a1a14', band: tick % 20 < 10 ? '#ff7a2a' : '#ff9a3a', foot:'#2a120c', head:'#4a2218', arm:'#5a2a1a', eye:'#ffe08a' }
               : { body:'#a8553a', band:'#c9704e', foot:'#7d3326', head:'#b9583f', arm:'#8f3d2c', eye:'#ffd27a' };
   if (e.dead){ ctx.globalAlpha = Math.max(0, e.t / 40); }
   ctx.fillStyle = C.body; ctx.fillRect(x + 2 + sh, y + 8, 16, 14);
@@ -2696,6 +2706,7 @@ function draw(){
     else img = (e.fast ? BUG_FAST : BUG)[Math.floor(tick / (e.fast ? 6 : 10)) % 2];
     if (e.dead && !e.flip){ ctx.drawImage(img, 0, 0, img.width, img.height, ex, ey + e.h - 4, 16, 4); }
     else if (e.dead && e.flip){ ctx.save(); ctx.translate(ex, ey + 10); ctx.scale(1, -1); ctx.drawImage(img, 0, 0); ctx.restore(); }
+    else if (e.kind === 'jerboa' && e.onGround && e.wait < 8) ctx.drawImage(img, sx, ey + 2, img.width, img.height - 2); // s'accroupit avant le bond
     else ctx.drawImage(img, sx, ey);
     if (e.kind === 'bscorp' && e.st === 'warn' && !e.dead){ ctx.fillStyle = '#e0473a'; ctx.fillRect(sx + 7, ey - 11, 2, 6); ctx.fillRect(sx + 7, ey - 3, 2, 2); }
     if (e.kind === 'jackal' && e.chasing && !e.dead && tick % 40 < 20){ ctx.fillStyle = '#e0473a'; ctx.fillRect(sx + (e.dir > 0 ? 13 : 2), ey + 2, 1, 1); }
@@ -2765,7 +2776,7 @@ function draw(){
   if (p && state !== 'title' && !(p.inv > 0 && Math.floor(tick/4) % 2 && !p.dying)){
     let frame = 'idle';
     if (p.dying || !p.onGround) frame = 'jump';
-    else if (Math.abs(p.vx) > 0.2) frame = Math.floor(p.anim) % 2 ? 'run1' : 'run2';
+    else if (Math.abs(p.vx) > 0.2) frame = ['run1', 'run2', 'run3', 'run4'][Math.floor(p.anim * 2) % 4]; // course en 4 images
     const img = FOX[frame][p.face];
     let s = p.big ? 2 : 1;
     if (p.growT > 0 && Math.floor(p.growT / 4) % 2) s = 1; // clignote pendant la croissance
@@ -2773,7 +2784,7 @@ function draw(){
     if (p.dying && !p.pit){ ctx.save(); ctx.translate(px + 8*s, py + 8*s); ctx.rotate(Math.min(p.deadT, 20) * 0.157); ctx.drawImage(img, -8*s, -8*s, 16*s, 16*s); ctx.restore(); }
     else {
       if (p.speedT > 0 && Math.abs(p.vx) > 1){ ctx.globalAlpha = 0.3; ctx.drawImage(img, px - Math.sign(p.vx) * 7, py, 16*s, 16*s); ctx.globalAlpha = 1; }
-      const hs = p.sq || 1, dw = 16*s*(2 - hs), dh = 16*s*hs; // étiré au saut, écrasé à l'atterrissage
+      const hs = (p.sq || 1) * (frame === 'idle' && Math.floor(tick / 32) % 2 ? 0.94 : 1), dw = 16*s*(2 - hs), dh = 16*s*hs; // respire au repos // étiré au saut, écrasé à l'atterrissage
       ctx.drawImage(img, Math.round(px + (16*s - dw) / 2), Math.round(py + 16*s - dh), Math.round(dw), Math.round(dh));
     }
     if (p.shield > 0 && !p.dying && p.atk <= 0) ctx.drawImage(SHIELD, p.face === 0 ? px + 10*s : px - 2*s, py + 6*s, 8*s, 9*s);
@@ -2808,10 +2819,10 @@ function draw(){
   bosses.forEach((b, bi) => { if (b.gone) return;
     let bx = Math.round(b.x - cx) - 2, by = Math.round(b.y) - 10;
     if (b.state === 'chargeWarn' || b.state === 'throwWarn' || b.state === 'stunned') bx += (tick % 4 < 2) ? 1 : -1;
-    const hide = (b.inv > 0 && Math.floor(tick / 3) % 2) || (b.dead && Math.floor(tick / 2) % 2);
+    const hide = (b.inv > 0 && !(b.flash > 0) && Math.floor(tick / 3) % 2) || (b.dead && Math.floor(tick / 2) % 2);
     if (!hide){
       if (b.dead){ ctx.globalAlpha = Math.max(0, 1 - b.deathT / 90); }
-      if (b.type === 'djinn') drawDjinn(b, bx + 2, by + 10); else ctx.drawImage((b.slot ? BOSS_TWIN : BOSS)[b.dir > 0 ? 0 : 1], bx, by, 48, 28);
+      drawBossBody(b, bx, by);
       ctx.globalAlpha = 1;
     }
     if (!b.dead){
@@ -2898,7 +2909,7 @@ let acc = 0, prev = performance.now();
 function loop(now){
   requestAnimationFrame(loop);
   acc += Math.min(100, now - prev); prev = now;
-  while (acc >= 1000/60){ update(); acc -= 1000/60; }
+  while (acc >= 1000/60){ if (hitstop > 0) hitstop--; else update(); acc -= 1000/60; } // micro-pause à l'impact
   if (state === 'title'){ camX = (Math.sin(tick*0.003) * 0.5 + 0.5) * (W*T - VW); }
   const shx = shakeT > 0 ? Math.round((Math.random() - 0.5) * shakeA) : 0, shy = shakeT > 0 ? Math.round((Math.random() - 0.5) * shakeA) : 0;
   if (shakeT > 0 && --shakeT === 0) shakeA = 0;
