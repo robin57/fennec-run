@@ -1230,6 +1230,8 @@ const TRACKS = {
   3: { bpm: 136, root: 53, scale: [0,1,4,5,7,8,10], prog: [0,1,0,6], arp: [0,2,4,7,4,2,0,2], bass: [0,3,6,8,11,14], kick: [0,6,8,14], seed: 41 }, // tempête
   boss: { bpm: 150, root: 45, scale: [0,1,3,5,7,8,11], prog: [0,0,5,4], arp: [0,7,2,7,4,7,2,7], bass: [0,2,4,6,8,10,12,14], kick: [0,4,8,12], seed: 53 },
 };
+// Simoun : mêmes rythmes, mais gammes sombres (phrygien, hijaz, locrien) et plus grave
+const SIM_SCALES = { 0: [0,1,3,5,7,8,10], 1: [0,1,4,5,7,8,10], 2: [0,1,3,5,7,8,10], 3: [0,1,3,5,6,8,10], boss: [0,1,3,5,6,8,11] };
 for (const k in TRACKS){ // mélodie : quelques notes tenues, toujours les mêmes pour une piste
   const tr = TRACKS[k], r = mulberry32(tr.seed); tr.lead = [];
   for (let st = 0; st < 64; st++) tr.lead.push([0, 3, 6, 10, 12].includes(st % 16) && r() < 0.55 ? [0, 2, 4, 1, 3][Math.floor(r() * 5)] : null);
@@ -1256,11 +1258,12 @@ function mDrum(t, kind){
   n.connect(f).connect(g).connect(musGain); n.start(t); n.stop(t + 0.06);
 }
 function mStep(tr, st, t){
-  const len = tr.scale.length, b = st % 16, deg = tr.prog[Math.floor(st / 16) % tr.prog.length], root = tr.root - (simoun ? 2 : 0);
-  const tone = (d, oct) => midi(root + tr.scale[((d % len) + len) % len] + 12 * (oct + Math.floor(d / len)));
+  const sc = simoun ? SIM_SCALES[mus.track] : tr.scale, len = sc.length, b = st % 16, deg = tr.prog[Math.floor(st / 16) % tr.prog.length], root = tr.root - (simoun ? 5 : 0);
+  const tone = (d, oct) => midi(root + sc[((d % len) + len) % len] + 12 * (oct + Math.floor(d / len)));
+  if (simoun && b === 0) mNote(t, tone(0, -2), 1.7, 'sawtooth', 0.035); // bourdon grave
   if (tr.bass.includes(b)) mNote(t, tone(deg, -1), 0.22, 'triangle', 0.09);
   if (b % 2 === 0) mNote(t, tone(deg + tr.arp[(b / 2) % tr.arp.length], 1), 0.12, simoun ? 'sawtooth' : 'square', simoun ? 0.016 : 0.02);
-  if (tr.lead[st] !== null) mNote(t, tone(deg + tr.lead[st], 2), 0.38, 'sine', 0.03);
+  if (tr.lead[st] !== null) mNote(t, tone(deg + tr.lead[st], simoun ? 1 : 2), simoun ? 0.5 : 0.38, simoun ? 'triangle' : 'sine', 0.03);
   if (tr.kick.includes(b)) mDrum(t, 'kick');
   if (b % 4 === 2) mDrum(t, 'hat'); else if (simoun && b % 2 === 1) mDrum(t, 'soft');
 }
@@ -1269,8 +1272,8 @@ function musicTick(){
   if (!ac || muted || state !== 'play' || ac.state !== 'running'){ mus.key = null; return; }
   if (!musGain){ musGain = ac.createGain(); musGain.gain.value = 0.55; musGain.connect(ac.destination); }
   const tk = isBossLevel(level) ? 'boss' : themeIdx, tr = TRACKS[tk], key = tk + (simoun ? 's' : '');
-  if (key !== mus.key){ mus.key = key; mus.next = ac.currentTime + 0.05; mus.step = 0; }
-  const sp = 60 / (tr.bpm + (simoun ? 8 : 0) + (level % 20 === 0 ? 10 : 0)) / 4;
+  if (key !== mus.key){ mus.key = key; mus.track = tk; mus.next = ac.currentTime + 0.05; mus.step = 0; }
+  const sp = 60 / (tr.bpm + (simoun ? -6 : 0) + (level % 20 === 0 ? 10 : 0)) / 4;
   if (mus.next < ac.currentTime) mus.next = ac.currentTime + 0.02; // après une pause : on repart sans rattrapage
   while (mus.next < ac.currentTime + 0.25){ mStep(tr, mus.step, mus.next); mus.next += sp; mus.step = (mus.step + 1) % 64; }
 }
