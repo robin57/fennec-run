@@ -238,6 +238,9 @@ const STR = {
     hint8: 'Niveau 8 : la pie des sables pique sur toi pour voler ton arme ou ton bouclier. Touche-la avant qu’elle quitte l’écran pour le récupérer.',
     simHint3: 'Simoun, niveau 3 : un chakram est peut-être caché. Lancé avec X, il traverse les ennemis et revient dans ta main.',
     simHint6: 'Simoun, niveau 6 : les golems de feu arrivent. Ils encaissent trois coups, leurs ondes de choc brûlent et ils te lancent une boule de feu après chaque coup au sol.',
+    djinn: 'DJINN DES SABLES',
+    hintDjinn: 'Niveau 20 : le djinn des sables garde le dernier désert. Il lance des orbes de sable qui te suivent, fonce au ras du sol et appelle des scarabées. Saute-lui sur la tête quand il est épuisé après sa charge.',
+    hintDjinnSim: ' En Simoun, un scorpion géant l’accompagne.',
     hintTwin: l => 'Niveau ' + l + ' : deux scorpions géants à la fois ! Ils chargent et tirent chacun de leur côté. Le portail ne s’ouvre qu’une fois les deux vaincus.',
     hint11: 'Niveau 11 : le chacal te repère de loin et te poursuit en sautant les obstacles. Saute-lui dessus ou distance-le.',
     hint12: 'Niveau 12 : le scorpion noir a une carapace à piques, ne lui saute pas dessus ! Frappe-le à l’épée, à l’arc ou par une jarre, ou esquive sa charge.',
@@ -317,6 +320,9 @@ const STR = {
     hint8: 'Level 8: the sand magpie dives at you to steal your weapon or shield. Hit it before it leaves the screen to get it back.',
     simHint3: 'Simoom, level 3: a chakram may be hidden. Thrown with X, it cuts through enemies and comes back to your hand.',
     simHint6: 'Simoom, level 6: fire golems arrive. They take three hits, their shockwaves burn and they throw a fireball at you after each ground pound.',
+    djinn: 'SAND DJINN',
+    hintDjinn: 'Level 20: the sand djinn guards the last desert. It throws sand orbs that follow you, dashes along the ground and calls beetles. Jump on its head while it is exhausted after its dash.',
+    hintDjinnSim: ' In Simoom, a giant scorpion fights alongside it.',
     hintTwin: l => 'Level ' + l + ': two giant scorpions at once! Each one charges and shoots on its own. The portal only opens once both are defeated.',
     hint11: 'Level 11: the jackal spots you from afar and chases you, jumping over obstacles. Stomp it or outrun it.',
     hint12: 'Level 12: the black scorpion has a spiked shell, do not jump on it! Hit it with the sword, the bow or a jar, or dodge its charge.',
@@ -787,6 +793,7 @@ function difficulty(L){
   };
 }
 
+let shakeT = 0, shakeA = 0; const shake = a => { shakeA = Math.max(shakeA, a); shakeT = 12; };
 let drops = [], dropsLeft = 1, boss = null, bosses = [], arena = null, gemDrops = [], arrows = [], wormTimer = 120, crumble = {};
 let W, map, groundTop, rockBase, enemies, portal, checkpoint, bumps, items = [], pickups = [], shots = [];
 function generate(L, seed){
@@ -1026,8 +1033,13 @@ function generateBoss(L, seed){
   rnd();
 }
 function makeBoss(L, slot = 0){
-  const twin = simoun && L >= 10, base = L % 20 === 0 ? 22 : 15, hpMax = twin ? Math.round(base * 0.75) : base;
-  return { x: (arena.x1 - 6 - slot * 9) * T, y: 12 * T - 20, w: 44, h: 20, hp: hpMax, maxHp: hpMax, dir: -1, state: 'sleep', t: slot * 40, inv: 0, next: slot ? 'throw' : 'charge', dead: false, deathT: 0, gone: false, L, slot, kind: 'boss' };
+  const twin = simoun && L >= 10;
+  if (L % 20 === 0 && slot === 0){ // niveau 20 : le djinn des sables
+    const hpMax = twin ? 20 : 26;
+    return { type: 'djinn', x: (arena.x1 - 8) * T, y: 10 * T, w: 26, h: 30, hp: hpMax, maxHp: hpMax, dir: -1, state: 'sleep', t: 0, inv: 0, next: 'orbs', dead: false, deathT: 0, gone: false, L, slot, kind: 'boss' };
+  }
+  const base = L % 20 === 0 ? 15 : 15, hpMax = twin ? Math.round(base * 0.75) : base;
+  return { type: 'scorpion', x: (arena.x1 - 6 - slot * 9) * T, y: 12 * T - 20, w: 44, h: 20, hp: hpMax, maxHp: hpMax, dir: -1, state: 'sleep', t: slot * 40, inv: 0, next: slot ? 'throw' : 'charge', dead: false, deathT: 0, gone: false, L, slot, kind: 'boss' };
 }
 function setGate(closed){
   if (!arena) return;
@@ -1448,7 +1460,7 @@ function winLevel(){
   const L0 = level, B0 = bonus, S0 = score, T0 = fmtTime(frames), N = level + 1;
   ui(() => {
     const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang][simoun ? 'simThemes' : 'themes'][themeFor(N)]) : '';
-    const hint = isBossLevel(N) ? (simoun && N >= 10 ? t('hintTwin', N) : t('hintBoss', N)) : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
+    const hint = isBossLevel(N) ? (N % 20 === 0 ? t('hintDjinn') + (simoun ? t('hintDjinnSim') : '') : simoun && N >= 10 ? t('hintTwin', N) : t('hintBoss', N)) : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
     showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + hint, t('next', N));
     renderShop();
   });
@@ -1658,6 +1670,7 @@ function updateOneBoss(){
   if (b.inv > 0) b.inv--;
   const pcx = p.x + p.w/2, bcx = b.x + b.w/2;
   const minX = (arena.x0) * T, maxX = (arena.x1 + 1) * T - b.w;
+  if (b.type === 'djinn'){ updateDjinn(b, pcx, minX, maxX); bossContact(b); return; }
   if (b.state === 'intro'){ if (--b.t <= 0){ b.state = 'walk'; b.t = 80; } }
   else if (b.state === 'walk'){
     b.dir = pcx > bcx ? 1 : -1;
@@ -1682,13 +1695,76 @@ function updateOneBoss(){
     if (--b.t <= 0){ (simoun ? aimShots : throwRocks)(D.rocks + (rage ? (simoun ? 1 : 2) : 0)); sfx.spit(); b.state = 'walk'; b.t = 80; }
   }
   b.x = Math.max(minX, Math.min(maxX, b.x));
+  bossContact(b);
+}
+function bossContact(b){
   if (!p.dying && overlap(p, b, 2)){
     if (p.vy > 0 && (p.y + p.h) - b.y < 12){
       p.vy = keys.jump ? -9 : -6.5; p.coyote = 0; p.y = b.y - p.h;
       p.vx = (p.x + p.w/2 < b.x + b.w/2 ? -1 : 1) * 2.8; // le fennec est éjecté sur le côté
       if (b.inv <= 0) damageBoss(5, true); else sfx.bump();
-    } else if (p.inv <= 0 && b.state !== 'hurt') contactHit(b);
+    } else if (p.inv <= 0 && b.state !== 'hurt' && b.state !== 'tired') contactHit(b);
   }
+}
+/* ---------- djinn des sables (boss du niveau 20) ---------- */
+function updateDjinn(b, pcx, minX, maxX){
+  const rage = b.hp <= Math.ceil(b.maxHp * 0.45), bcx = b.x + b.w/2, floatY = 3.5 * T, groundY = 12 * T - b.h;
+  if (b.state !== 'swoop') b.dir = pcx > bcx ? 1 : -1;
+  if (tick % 5 === 0 && b.state !== 'tired') burst(b.x + 8 + Math.random() * 10, b.y + b.h - 4, '#d9a35f', 1);
+  if (b.state === 'intro'){ b.y += (floatY - b.y) * 0.05; if (--b.t <= 0){ b.state = 'float'; b.t = 90; } }
+  else if (b.state === 'float'){
+    const tx = Math.max(minX, Math.min(maxX, pcx - b.w/2 + Math.sin(tick * 0.02) * 60));
+    b.x += Math.max(-1.6, Math.min(1.6, (tx - b.x) * 0.03)) * (rage ? 1.4 : 1);
+    b.y += (floatY + Math.sin(tick * 0.05) * 6 - b.y) * 0.1;
+    if (--b.t <= 0){
+      if (b.next === 'orbs'){ b.state = 'orbsWarn'; b.t = 36; sfx.bossWarn(); b.next = 'swoop'; }
+      else if (b.next === 'swoop'){ b.state = 'swoopWarn'; b.t = 45; sfx.roar(); b.next = enemies.filter(e => !e.dead && !e.gone).length < 3 ? 'summon' : 'orbs'; }
+      else { b.state = 'summonWarn'; b.t = 40; sfx.hiss(); b.next = 'orbs'; }
+    }
+  } else if (b.state === 'orbsWarn'){ // mains qui brillent, puis orbes qui suivent le fennec
+    if (--b.t <= 0){
+      const n = rage ? 7 : 5;
+      for (let i = 0; i < n; i++){ const a = Math.PI / 2 + (i - (n - 1) / 2) * 0.45; shots.push({ x: b.x + b.w/2 - 4, y: b.y + 14, w: 8, h: 8, vx: Math.cos(a) * 1.8, vy: Math.sin(a) * 1.8, home: true, fire: true, sand: true, life: 260, gone: false }); }
+      sfx.spit(); b.state = 'float'; b.t = rage ? 60 : 80;
+    }
+  } else if (b.state === 'swoopWarn'){ // il recule en clignotant, puis fonce au ras du sol
+    b.y += (floatY - 16 - b.y) * 0.1; b.x -= b.dir * 0.6;
+    if (--b.t <= 0){ b.state = 'swoop'; b.sdir = b.dir; }
+  } else if (b.state === 'swoop'){
+    b.y += (groundY - 2 - b.y) * 0.15; b.x += b.sdir * (rage ? 5 : 4.2);
+    if (tick % 2 === 0) burst(b.x + b.w/2, b.y + b.h, '#d9a35f', 2);
+    if (b.x <= minX || b.x >= maxX){ b.state = 'tired'; b.t = rage ? 70 : 95; sfx.bump(); shake(6); burst(b.x + b.w/2, b.y + b.h, '#c98a4c', 12); }
+  } else if (b.state === 'tired'){ b.y = groundY; if (--b.t <= 0){ b.state = 'float'; b.t = 70; } } // épuisé : on peut lui sauter sur la tête
+  else if (b.state === 'summonWarn'){
+    if (--b.t <= 0){
+      for (const side of [arena.x0 + 2, arena.x1 - 2]) enemies.push({ kind: 'beetle', x: side * T, y: 12 * T - 10, w: 14, h: 10, vx: 0, vy: 0, dir: side < (arena.x0 + arena.x1) / 2 ? 1 : -1, dead: false, t: 0, onGround: false, gone: false, fast: true, speed: 1.2 });
+      sfx.worm(); b.state = 'float'; b.t = 80;
+    }
+  } else if (b.state === 'hurt'){ b.y += (floatY - 10 - b.y) * 0.08; if (--b.t <= 0){ b.state = 'float'; b.t = 60; } }
+  b.x = Math.max(minX, Math.min(maxX, b.x));
+}
+function drawDjinn(b, x, y){
+  if (b.state === 'sleep'){ // tourbillon de sable endormi
+    for (let i = 0; i < 4; i++){ ctx.fillStyle = i % 2 ? '#b07a3a' : '#d9a35f'; ctx.fillRect(x + 6 + Math.sin(tick * 0.1 + i) * 3, 12 * T - 4 - i * 3, 14 - i * 3, 3); }
+    return;
+  }
+  const rage = b.hp <= Math.ceil(b.maxHp * 0.45), bob = Math.round(Math.sin(tick * 0.08) * 2), yy = y + bob;
+  const cast = b.state === 'orbsWarn' || b.state === 'summonWarn', warn = b.state === 'swoopWarn' && tick % 6 < 3;
+  ctx.fillStyle = `rgba(63,214,198,${0.12 + 0.06 * Math.sin(tick * 0.1)})`; ctx.beginPath(); ctx.ellipse(x + 13, yy + 9, 19, 21, 0, 0, Math.PI * 2); ctx.fill(); // aura
+  ctx.fillStyle = '#3a2414'; ctx.fillRect(x + 5, yy - 1, 16, 20); ctx.fillRect(x + 7, yy - 4, 12, 4); ctx.fillRect(x + 10, yy - 6, 6, 2); // contour sombre
+  for (let i = 0; i < 6; i++){ // queue en tourbillon
+    const w = 16 - i * 2.4; ctx.fillStyle = i % 2 ? '#6e4428' : '#a8723a';
+    ctx.fillRect(Math.round(x + 13 - w / 2 + Math.sin(tick * 0.3 + i) * 2), yy + 17 + i * 2, Math.round(w), 2);
+  }
+  ctx.fillStyle = warn ? '#e0473a' : '#c98a4c'; ctx.fillRect(x + 6, yy + 7, 14, 11);   // torse
+  ctx.fillStyle = '#e2b878'; ctx.fillRect(x + 7, yy + 8, 3, 8);
+  ctx.fillStyle = '#8a5a30'; ctx.fillRect(x + 6, yy, 14, 9); ctx.fillRect(x + 8, yy - 3, 10, 4); ctx.fillRect(x + 11, yy - 5, 4, 3); // capuche
+  ctx.fillStyle = '#2a160c'; ctx.fillRect(x + 9, yy + 3, 8, 5);                          // visage dans l'ombre
+  ctx.fillStyle = rage ? '#ff4a2a' : '#3fd6c6'; ctx.fillRect(x + 10, yy + 5, 2, 1); ctx.fillRect(x + 14, yy + 5, 2, 1);
+  ctx.fillStyle = '#c98a4c';
+  if (cast){ ctx.fillRect(x + 1, yy - 2, 4, 10); ctx.fillRect(x + 21, yy - 2, 4, 10); ctx.fillStyle = b.state === 'orbsWarn' ? '#ffd27a' : '#e0473a'; ctx.fillRect(x + 1, yy - 5, 4, 4); ctx.fillRect(x + 21, yy - 5, 4, 4); }
+  else { ctx.fillRect(x + 2, yy + 8, 4, 8); ctx.fillRect(x + 20, yy + 8, 4, 8); }
+  if (b.state === 'tired'){ ctx.fillStyle = '#ffd27a'; for (let i = 0; i < 3; i++){ const a = tick * 0.15 + i * 2.1; ctx.fillRect(x + 12 + Math.cos(a) * 10, yy - 8 + Math.sin(a) * 3, 2, 2); } }
 }
 function makeGem(x, y, kind){
   return { x: x - 5, y: y - 6, w: 10, h: 10, vx: (Math.random() - 0.5) * 2, vy: -3.5, kind, life: 600, gone: false, onGround: false, seed: Math.random() * 10 };
@@ -1907,6 +1983,7 @@ function updateDrops(){
 function updateShots(){
   for (const s of shots){
     if (s.gone) continue;
+    if (s.home && s.life > 90){ const dx = (p.x + p.w/2) - (s.x + 4), dy = (p.y + p.h/2) - (s.y + 4), d = Math.hypot(dx, dy) || 1; s.vx += dx / d * 0.06; s.vy += dy / d * 0.06; const sp = Math.hypot(s.vx, s.vy); if (sp > 2.2){ s.vx *= 2.2 / sp; s.vy *= 2.2 / sp; } }
     s.x += s.vx; s.life--;
     if (s.grav){ s.vy += 0.22; s.y += s.vy; }
     else if (s.fire) s.y += s.vy;
@@ -2490,6 +2567,12 @@ function draw(){
       ctx.fillStyle = 'rgba(242,198,130,.7)'; ctx.fillRect(sx, sy + 6, 10, 2);
       continue;
     }
+    if (s.sand){
+      ctx.fillStyle = 'rgba(242,198,130,.3)'; ctx.fillRect(sx - 1, sy - 1, 10, 10);
+      ctx.fillStyle = '#d9a35f'; ctx.fillRect(sx + 1, sy, 6, 8); ctx.fillRect(sx, sy + 1, 8, 6);
+      ctx.fillStyle = '#fff0c4'; ctx.fillRect(sx + 2 + (tick % 4 < 2 ? 1 : 0), sy + 2, 2, 2);
+      continue;
+    }
     if (s.fire){
       ctx.fillStyle = 'rgba(255,120,40,.35)'; ctx.fillRect(sx - Math.sign(s.vx) * 4, sy + 1, 6, 5);
       ctx.fillStyle = '#e0471a'; ctx.fillRect(sx + 1, sy, 5, 7); ctx.fillRect(sx, sy + 1, 7, 5);
@@ -2583,7 +2666,7 @@ function draw(){
     const hide = (b.inv > 0 && Math.floor(tick / 3) % 2) || (b.dead && Math.floor(tick / 2) % 2);
     if (!hide){
       if (b.dead){ ctx.globalAlpha = Math.max(0, 1 - b.deathT / 90); }
-      ctx.drawImage((b.slot ? BOSS_TWIN : BOSS)[b.dir > 0 ? 0 : 1], bx, by, 48, 28);
+      if (b.type === 'djinn') drawDjinn(b, bx + 2, by + 10); else ctx.drawImage((b.slot ? BOSS_TWIN : BOSS)[b.dir > 0 ? 0 : 1], bx, by, 48, 28);
       ctx.globalAlpha = 1;
     }
     if (!b.dead){
@@ -2597,7 +2680,7 @@ function draw(){
       ctx.fillStyle = '#4a3346'; ctx.fillRect(x0, y0 + 8, w, 6);
       ctx.fillStyle = '#e0473a'; ctx.fillRect(x0, y0 + 8, Math.round(w * b.hp / b.maxHp), 6);
       ctx.fillStyle = '#f3dcb8'; ctx.font = '8px "Pixelify Sans", monospace'; ctx.textBaseline = 'top';
-      ctx.fillText(t('boss') + (bosses.length > 1 ? ' ' + (bi + 1) : ''), x0, y0 - 2);
+      ctx.fillText(t(b.type === 'djinn' ? 'djinn' : 'boss') + (bosses.filter(x => x.type === b.type).length > 1 ? ' ' + (bi + 1) : ''), x0, y0 - 2);
     }
   });
   drawHearts();
