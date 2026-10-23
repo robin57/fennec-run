@@ -104,7 +104,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 .icon-btn{font-family:var(--display);background:none;border:1px solid var(--edge);color:var(--dim);border-radius:4px;padding:2px 10px;cursor:pointer;font-size:14px}
 .icon-btn:focus-visible{outline:2px solid var(--gem);outline-offset:2px}
 .hud-btns{display:flex;gap:6px}
-.toast{position:absolute;z-index:4;top:8px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(92%,46ch);display:grid;gap:2px;
+.toast{position:absolute;z-index:6;top:8px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(92%,46ch);display:grid;gap:2px;
   padding:8px 12px;background:rgba(27,19,32,.9);border:1px solid var(--edge);border-left:3px solid var(--ember);border-radius:6px;pointer-events:none;
   font-size:13px;line-height:1.35;color:var(--sand);animation:toastIn .25s ease-out}
 .toast b{font-family:var(--display);font-weight:700;color:var(--ember);font-size:14px}
@@ -112,6 +112,21 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 .hud-btns .icon-btn{min-height:28px}
 .overlay{overflow:auto}
+.menu-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.menu-btns .icon-btn{min-height:30px;padding:2px 12px}
+.panel{display:grid;gap:4px;width:min(100%,600px);max-height:min(46vh,300px);overflow:auto;text-align:left}
+.panel.grid{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.card:has(> .panel:not([hidden])){max-width:min(100%,640px)}
+.ach{display:grid;grid-template-columns:auto 1fr;gap:0 8px;padding:4px 8px;border:1px solid var(--edge);border-radius:4px;background:var(--panel);font-size:12px;line-height:1.3}
+.ach b{font-family:var(--display);font-weight:700;color:var(--ember);font-size:13px}
+.ach .ic{grid-row:span 2;align-self:center;font-family:var(--display);color:var(--gem);font-size:16px}
+.ach.locked{opacity:.45}.ach.locked .ic{color:var(--dim)}
+.scores{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.scores td{padding:3px 6px;border-bottom:1px solid var(--edge)}.scores td:nth-child(3){text-align:right;color:var(--ember)}
+.scores tr.me td{color:var(--gem)}
+.name-entry{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;justify-content:center;font-size:13px;color:var(--sand)}
+.name-entry input{font:inherit;padding:4px 8px;border-radius:4px;border:1px solid var(--edge);background:var(--panel);color:var(--sand);width:14ch}
+.name-entry input:focus-visible{outline:2px solid var(--gem);outline-offset:1px}
 #hTime.urgent{color:#ff6a4a;animation:blink .5s steps(2) infinite}
 @keyframes blink{50%{opacity:.4}}
 @media (prefers-reduced-motion:reduce){#hTime.urgent{animation:none}}
@@ -172,6 +187,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
           <h2 id="ovTitle">Fennec Run</h2>
           <p id="ovText">Rejoins le portail au bout de chaque désert. Évite les sables mouvants, écrase les scarabées en leur sautant dessus, frappe les jarres par en dessous.</p>
           <div class="shop" id="shop" hidden></div>
+          <div class="panel" id="panel" hidden></div>
           <div class="settings" id="settings" hidden>
             <label><span data-i18n="volMusic">Musique</span><input type="range" id="volMusic" min="0" max="100" step="5"></label>
             <label><span data-i18n="volSfx">Bruitages</span><input type="range" id="volSfx" min="0" max="100" step="5"></label>
@@ -183,6 +199,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
             <button class="play alt" id="altBtn" type="button" hidden>Nouvelle partie</button>
             <button class="play sim" id="simBtn" type="button" data-i18n="playSimoun" hidden>Mode Simoun</button>
           </div>
+          <div class="menu-btns" id="menuBtns" hidden><button class="icon-btn" id="scoresBtn" type="button">Scores</button><button class="icon-btn" id="achBtn" type="button">Succès</button></div>
         </div>
       </div>
       <div class="pad" data-i18n-aria="pad" aria-label="Commandes tactiles">
@@ -266,6 +283,9 @@ const STR = {
     scimitar: 'Cimeterre', chakram: 'Chakram', atkRing: 'ANNEAU', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
+    achUnlocked: 'Succès débloqué !', achTitle: 'Succès', achCount: (n, tot) => n + ' sur ' + tot + ' débloqués', achBtn: (n, tot) => 'Succès ' + n + '/' + tot,
+    scoresTitle: 'Meilleurs scores', scoresBtn: 'Scores', noScores: 'Aucune partie terminée pour l’instant.', back: 'Retour',
+    nameLabel: r => 'Ton nom pour le classement (n° ' + r + ') :', lvlShort: l => 'niv. ' + l,
     timedTitle: 'Contre-la-montre !', timedText: n => n + ' secondes pour atteindre le portail. Temps écoulé : une vie en moins et retour au début du niveau.',
     timeUpTitle: 'Temps écoulé !', timeUpText: 'Le désert t’a rattrapé. Retour au début du niveau.',
     hintTimed: 'Prochain niveau : contre-la-montre ! Atteins le portail avant la fin du compte à rebours. ',
@@ -365,6 +385,9 @@ const STR = {
     scimitar: 'Scimitar', chakram: 'Chakram', atkRing: 'RING', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
+    achUnlocked: 'Achievement unlocked!', achTitle: 'Achievements', achCount: (n, tot) => n + ' of ' + tot + ' unlocked', achBtn: (n, tot) => 'Achievements ' + n + '/' + tot,
+    scoresTitle: 'High scores', scoresBtn: 'Scores', noScores: 'No finished run yet.', back: 'Back',
+    nameLabel: r => 'Your name for the leaderboard (#' + r + '):', lvlShort: l => 'lvl ' + l,
     timedTitle: 'Against the clock!', timedText: n => n + ' seconds to reach the portal. Time up: one life lost and back to the start of the level.',
     timeUpTitle: 'Time up!', timeUpText: 'The desert caught up with you. Back to the start of the level.',
     hintTimed: 'Next level: against the clock! Reach the portal before the countdown ends. ',
@@ -1371,6 +1394,7 @@ function keyName(e){
 }
 const inMenu = () => state==='title' || state==='over' || state==='clear' || state==='victory';
 addEventListener('keydown', e => {
+  if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'text'){ if (e.key === 'Enter') e.target.blur(); return; }
   const n = keyName(e);
   if (n){ e.preventDefault(); if (inMenu()){ if (n==='jump' && !e.repeat) menuAction(); return; } setKey(n, true); return; }
   const k = e.key.toLowerCase();
@@ -1378,7 +1402,7 @@ addEventListener('keydown', e => {
   if (k==='m') toggleMute();
   if (e.key==='Enter' && inMenu()) menuAction();
 });
-addEventListener('keyup', e => { const n = keyName(e); if (n) setKey(n, false); });
+addEventListener('keyup', e => { if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'text') return; const n = keyName(e); if (n) setKey(n, false); });
 document.addEventListener('visibilitychange', () => { if (document.hidden){ keys.left = keys.right = keys.jump = keys.attack = false; if (state === 'play') togglePause(); } });
 addEventListener('blur', () => { keys.left = keys.right = keys.jump = keys.attack = false; if (state==='play') togglePause(); });
 function bindPad(id, name){
@@ -1436,18 +1460,108 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, chakram: chak, up: [upBow, upSword, upShield, upChak], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
+/* ---------- succès et classement (enregistrés sur l'appareil) ---------- */
+const ACH = [
+  { id: 'first',    fr: ['Premiers pas', 'Terminer le niveau 1.'], en: ['First steps', 'Clear level 1.'] },
+  { id: 'scorpion', fr: ['Dompteur de scorpion', 'Vaincre le scorpion géant.'], en: ['Scorpion tamer', 'Defeat the giant scorpion.'] },
+  { id: 'worm',     fr: ['Charmeur de ver', 'Vaincre le ver des sables géant.'], en: ['Worm charmer', 'Defeat the giant sandworm.'] },
+  { id: 'royal',    fr: ['Tombeur de rois', 'Vaincre le vautour royal.'], en: ['Kingslayer', 'Defeat the royal vulture.'] },
+  { id: 'djinn',    fr: ['Maître du désert', 'Vaincre le djinn des sables et finir le jeu.'], en: ['Master of the desert', 'Defeat the sand djinn and finish the game.'] },
+  { id: 'simoun',   fr: ['Œil du Simoun', 'Finir le mode Simoun.'], en: ['Eye of the Simoom', 'Finish Simoom mode.'] },
+  { id: 'deathless',fr: ['Increvable', 'Finir le jeu sans perdre une seule vie.'], en: ['Unbreakable', 'Finish the game without losing a single life.'] },
+  { id: 'stomp50',  fr: ['Écraseur', 'Écraser 50 ennemis en leur sautant dessus (au total).'], en: ['Stomper', 'Stomp 50 enemies (in total).'] },
+  { id: 'gems500',  fr: ['Chercheur de gemmes', 'Ramasser 500 gemmes (au total).'], en: ['Gem hunter', 'Collect 500 gems (in total).'] },
+  { id: 'rich',     fr: ['Trésor du désert', 'Avoir 300 gemmes en poche.'], en: ['Desert treasure', 'Hold 300 gems at once.'] },
+  { id: 'spender',  fr: ['Gros client', 'Dépenser 1 000 gemmes à l’échoppe (au total).'], en: ['Big spender', 'Spend 1,000 gems at the shop (in total).'] },
+  { id: 'golems',   fr: ['Casseur de pierres', 'Vaincre 10 golems (au total).'], en: ['Stonebreaker', 'Defeat 10 golems (in total).'] },
+  { id: 'nohit',    fr: ['Sans une égratignure', 'Terminer un niveau sans prendre un seul coup.'], en: ['Not a scratch', 'Clear a level without taking a single hit.'] },
+  { id: 'speed',    fr: ['Vent du désert', 'Terminer un niveau (hors boss) en moins de 45 secondes.'], en: ['Desert wind', 'Clear a level (not a boss) in under 45 seconds.'] },
+  { id: 'combo',    fr: ['Pied léger', 'Écraser 3 ennemis d’affilée sans toucher le sol.'], en: ['Light foot', 'Stomp 3 enemies in a row without touching the ground.'] },
+  { id: 'unarmed',  fr: ['Mains nues', 'Vaincre un boss sans épée, arc ni chakram.'], en: ['Bare paws', 'Defeat a boss with no sword, bow or chakram.'] },
+  { id: 'thief',    fr: ['Rends-moi ça !', 'Récupérer un objet volé par la pie.'], en: ['Give it back!', 'Recover an item stolen by the magpie.'] },
+  { id: 'timed',    fr: ['Contre-la-montre', 'Réussir un niveau contre-la-montre.'], en: ['Against the clock', 'Clear a timed level.'] },
+  { id: 'clutch',   fr: ['In extremis', 'Réussir un contre-la-montre avec moins de 5 secondes d’avance.'], en: ['Photo finish', 'Clear a timed level with less than 5 seconds left.'] },
+  { id: 'upgrade',  fr: ['Forgeron', 'Acheter une amélioration d’arme.'], en: ['Blacksmith', 'Buy a weapon upgrade.'] },
+  { id: 'allup',    fr: ['Arsenal complet', 'Avoir l’arc, le cimeterre et le bouclier améliorés dans une même partie.'], en: ['Full arsenal', 'Own the bow, scimitar and shield upgrades in one run.'] },
+  { id: 'hearts',   fr: ['Cœur de lion', 'Atteindre 6 cœurs.'], en: ['Lionheart', 'Reach 6 hearts.'] },
+  { id: 'lava',     fr: ['Pieds brûlés', 'Être projeté par une gerbe de feu… et survivre.'], en: ['Hot feet', 'Get launched by a fire jet… and survive.'] },
+  { id: 'eco',      fr: ['Fourmi prévoyante', 'Finir un niveau 15 avec au moins 200 gemmes en poche.'], en: ['Thrifty ant', 'Clear level 15 with at least 200 gems in your pocket.'] },
+];
+let achDone = {}, stats = {}, scores = [], lastEntry = null, subView = null, runLost = 0, levelHurt = false;
+try { achDone = JSON.parse(localStorage.getItem('fennec-ach') || '{}'); stats = JSON.parse(localStorage.getItem('fennec-stats') || '{}'); scores = JSON.parse(localStorage.getItem('fennec-scores') || '[]'); } catch(e){}
+const today = () => new Date().toISOString().slice(0, 10);
+function ach(id){
+  if (achDone[id]) return;
+  achDone[id] = today();
+  try { localStorage.setItem('fennec-ach', JSON.stringify(achDone)); } catch(e){}
+  const a = ACH.find(x => x.id === id);
+  if (a){ sfx.power(); tipQueue.push({ title: '★ ' + t('achUnlocked'), text: a[lang][0] + ' : ' + a[lang][1] }); if (!tipKey) nextTip(); } // en file d'attente
+}
+function stat(k, n = 1){
+  stats[k] = (stats[k] || 0) + n;
+  try { localStorage.setItem('fennec-stats', JSON.stringify(stats)); } catch(e){}
+  const goals = { stomps: [50, 'stomp50'], gems: [500, 'gems500'], spent: [1000, 'spender'], golems: [10, 'golems'] };
+  if (goals[k] && stats[k] >= goals[k][0]) ach(goals[k][1]);
+}
+function recordScore(){ // chaque partie terminée entre au classement si elle fait partie des 10 meilleures
+  let name = 'Fennec'; try { name = localStorage.getItem('fennec-name') || 'Fennec'; } catch(e){}
+  const entry = { name, score, level, simoun, date: today(), id: Date.now() };
+  scores.push(entry); scores.sort((a, b) => b.score - a.score); scores = scores.slice(0, 10);
+  try { localStorage.setItem('fennec-scores', JSON.stringify(scores)); } catch(e){}
+  lastEntry = scores.includes(entry) ? entry : null;
+}
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, lost: runLost, hp, maxHp, healBought, arrows: arrowsLeft, chakram: chak, up: [upBow, upSword, upShield, upChak], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
   const k = sv.q ? 1 : 2; // anciennes sauvegardes : demi-cœurs
-  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; chak = !!sv.chakram; [upBow, upSword, upShield, upChak] = [0, 1, 2, 3].map(i => !!(sv.up || [])[i]); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
+  simoun = !!sv.simoun; runLost = sv.lost || 0; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; chak = !!sv.chakram; [upBow, upSword, upShield, upChak] = [0, 1, 2, 3].map(i => !!(sv.up || [])[i]); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
 function ui(render){ ovRender = render; render(); }
+const panelEl = document.getElementById('panel'), menuBtnsEl = document.getElementById('menuBtns'), scoresBtnEl = document.getElementById('scoresBtn'), achBtnEl = document.getElementById('achBtn');
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function showScores(){
+  subView = 'scores';
+  ui(() => {
+    showOverlay(t('scoresTitle'), scores.length ? '' : t('noScores'), '', t('back'));
+    if (!scores.length) return;
+    const tb = el('table', 'scores');
+    scores.forEach((sc, i) => {
+      const tr = el('tr', lastEntry && sc.id === lastEntry.id ? 'me' : '');
+      [String(i + 1), sc.name, String(sc.score), t('lvlShort', sc.level) + (sc.simoun ? ' · ' + t('simLabel') : ''), sc.date].forEach(v => tr.append(el('td', '', v)));
+      tb.append(tr);
+    });
+    panelEl.replaceChildren(tb); panelEl.hidden = false;
+  });
+}
+function showAchievements(){
+  subView = 'ach';
+  ui(() => {
+    const n = ACH.filter(a => achDone[a.id]).length;
+    showOverlay(t('achTitle'), t('achCount', n, ACH.length), '', t('back'));
+    panelEl.replaceChildren(...ACH.map(a => {
+      const d = el('div', 'ach' + (achDone[a.id] ? '' : ' locked'));
+      d.append(el('span', 'ic', achDone[a.id] ? '★' : '☆'), el('b', '', a[lang][0]), el('span', '', a[lang][1] + (achDone[a.id] ? ' (' + achDone[a.id] + ')' : '')));
+      return d;
+    }));
+    panelEl.className = 'panel grid'; panelEl.hidden = false;
+  });
+}
+function renderNameEntry(){ // saisie du nom quand la partie entre au classement
+  if (!lastEntry) return;
+  const rank = scores.indexOf(lastEntry) + 1, row = el('label', 'name-entry'), inp = el('input');
+  inp.type = 'text'; inp.maxLength = 12; inp.value = lastEntry.name; inp.autocomplete = 'off';
+  inp.addEventListener('input', () => { lastEntry.name = inp.value.trim() || 'Fennec'; try { localStorage.setItem('fennec-scores', JSON.stringify(scores)); localStorage.setItem('fennec-name', lastEntry.name); } catch(e){} });
+  row.append(el('span', '', t('nameLabel', rank)), inp);
+  panelEl.replaceChildren(row); panelEl.hidden = false;
+}
+scoresBtnEl.addEventListener('click', () => { initAudio(); showScores(); });
+achBtnEl.addEventListener('click', () => { initAudio(); showAchievements(); });
 function showTitle(){
+  subView = null;
   const sv = readSave();
   setTheme(sv ? sv.level : 1);
   ui(() => {
@@ -1456,6 +1570,7 @@ function showTitle(){
     if (s2) showOverlay('Fennec Run', t('contText', s2.level, s2.score, s2.lives) + (s2.simoun ? ' (' + t('simLabel') + ')' : ''), t('contSmall') + extra, t('cont'), t('newGame'));
     else showOverlay('Fennec Run', t('titleText'), t('titleSmall') + extra, t('play'));
     simBtn.hidden = !simounUnlocked();
+    menuBtnsEl.hidden = false; scoresBtnEl.textContent = t('scoresBtn'); achBtnEl.textContent = t('achBtn', Object.keys(achDone).filter(k => ACH.some(a => a.id === k)).length, ACH.length);
   });
 }
 function quitToTitle(){
@@ -1468,7 +1583,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   level = n;
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
-  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120; makeSigns();
+  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120; makeSigns(); levelHurt = false;
   timeLimit = isTimedLevel(level) ? Math.ceil(W * T / (MAXV * 60) * 2.3) + (level <= 4 ? 10 : 0) : 0; timedOut = false;
   if (timeLimit) announce(t('timedTitle'), t('timedText', timeLimit));
   if (buyFeather){ p.feather = 1200; buyFeather = false; }
@@ -1479,7 +1594,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   try { window.focus(); } catch(e){}
 }
 function startRun(mode = false){
-  initAudio(); simoun = !!mode;
+  initAudio(); simoun = !!mode; runLost = 0;
   if (!simoun){ try { localStorage.removeItem('fennec-simoun'); } catch(e){} } // tout est perdu : il faut refranchir le niveau 20
   runSeed = Math.floor(Math.random() * 1e9);
   score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; chak = false; upBow = upSword = upShield = upChak = false; runFound = new Set(); buyFeather = buySpeed = false;
@@ -1487,6 +1602,7 @@ function startRun(mode = false){
 }
 function menuAction(){
   initAudio();
+  if (subView){ subView = null; showTitle(); return; } // écran Scores / Succès : retour à l'accueil
   if (state === 'title' && readSave()) continueRun();
   else if (state === 'clear') loadLevel(level + 1, p && p.big, p ? p.shield : 0, p && p.sword, p && p.bow);
   else if (state === 'pause') togglePause();
@@ -1542,7 +1658,8 @@ function renderShop(){
     b.append(nb, ds, pr);
     b.addEventListener('click', () => {
       if (b.disabled || locked || gems < it.price || !it.ok) return;
-      gems -= it.price; it.buy(); sfx.swordGet();
+      gems -= it.price; it.buy(); sfx.swordGet(); stat('spent', it.price);
+      if (it.cat === 'up') ach('upgrade'); if (upBow && upSword && upShield) ach('allup'); if (maxHp >= 24) ach('hearts');
       runStart = snapshot(level + 1, p.big, p.shield, p.sword, p.bow); writeSave(runStart); // achat enregistré tout de suite
       last = {}; if (ovRender) ovRender();
     });
@@ -1554,6 +1671,7 @@ function showOverlay(title, text, small, btn, alt){
   ovTip.hidden = !(state === 'title' && typeof showIosTip !== 'undefined' && showIosTip); if (!ovTip.hidden) ovTip.textContent = t('iosTip');
   ovTitle.textContent = title; ovText.textContent = text; ovSmall.textContent = small; playBtn.textContent = btn;
   altBtn.hidden = !alt; if (alt) altBtn.textContent = alt;
+  panelEl.hidden = true; panelEl.className = 'panel'; menuBtnsEl.hidden = true;
   settingsEl.hidden = true;
   simBtn.hidden = true;
   shopEl.hidden = true;
@@ -1571,7 +1689,7 @@ function togglePause(){
 function fmtTime(f){ const s = Math.floor(f/60); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
 
 function addGem(n, pts){
-  gems += n; score += pts; sfx.gem(); // les gemmes ne sont plus qu'une monnaie : les vies s'achètent à l'échoppe
+  gems += n; score += pts; sfx.gem(); stat('gems', n); if (gems >= 300) ach('rich'); // les gemmes ne sont plus qu'une monnaie : les vies s'achètent à l'échoppe
 }
 function burst(x, y, color, n=6){
   for (let i=0;i<n;i++) particles.push({ x, y, vx:(Math.random()-0.5)*3, vy:-Math.random()*3-1, life:30, color, g:0.15 });
@@ -1587,14 +1705,15 @@ function saveBest(){
   showBest();
 }
 function loseLife(){
-  lives--;
+  lives--; runLost++;
   if (lives <= 0){
-    timedOut = false; state = 'over'; const wasBest = score > best; saveBest(); clearSave();
+    timedOut = false; state = 'over'; const wasBest = score > best; saveBest(); clearSave(); recordScore();
     const L0 = level, S0 = score, G0 = gems;
     ui(() => {
       const rec = wasBest ? t('newRecord') : t('record', best, bestLevel);
       if (simounUnlocked()) showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec + ' ' + t('relockInfo'), t('restartSimoun'), t('newGame'));
       else showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec, t('newGame'));
+      renderNameEntry();
     });
   } else if (timedOut){ // contre-la-montre perdu : on recommence le niveau tel qu'il était au départ
     timedOut = false; hp = maxHp; const rs = runStart || {};
@@ -1608,12 +1727,18 @@ function loseLife(){
 }
 function winGame(){
   // niveau 20 : le désert est traversé, le Simoun est débloqué
-  state = 'victory'; saveBest(); clearSave(); sfx.win();
+  state = 'victory'; saveBest(); clearSave(); sfx.win(); recordScore();
+  ach('djinn'); if (simoun) ach('simoun'); if (runLost === 0) ach('deathless');
   try { localStorage.setItem('fennec-simoun', '1'); } catch(e){}
   const S0 = score, wasSim = simoun;
-  ui(() => showOverlay(t(wasSim ? 'winTitleSim' : 'winTitle'), t('winText', S0), t('simounInfo') + ' ' + t('relockInfo'), t(wasSim ? 'replaySimoun' : 'playSimoun'), t('newGame')));
+  ui(() => { showOverlay(t(wasSim ? 'winTitleSim' : 'winTitle'), t('winText', S0), t('simounInfo') + ' ' + t('relockInfo'), t(wasSim ? 'replaySimoun' : 'playSimoun'), t('newGame')); renderNameEntry(); });
 }
 function winLevel(){
+  if (level === 1) ach('first');
+  if (!levelHurt) ach('nohit');
+  if (!isBossLevel(level) && frames < 45 * 60) ach('speed');
+  if (timeLimit){ ach('timed'); if (timeLeft() < 300) ach('clutch'); }
+  if (level === 15 && gems >= 200) ach('eco');
   if (level % 20 === 0){ score += 300 * level; return winGame(); }
   state = 'clear';
   const secs = Math.floor(frames/60), par = Math.round(W / 5);
@@ -1742,6 +1867,7 @@ function stealFrom(e){
 }
 function giveBack(e){
   if (!e.loot) return;
+  ach('thief');
   if (e.loot === 'bow'){ p.bow = true; chak = false; p.sword = false; p.shield = 0; arrowsLeft = e.lootN; }
   else if (e.loot === 'chakram'){ chak = true; p.sword = false; p.bow = false; }
   else if (e.loot === 'sword'){ p.sword = true; chak = false; p.bow = false; }
@@ -1790,11 +1916,11 @@ function damageBoss(n, stomp){
   b.hp -= n; b.inv = stomp ? 90 : 50; b.flash = 7; shake(3); freeze(b.hp <= 0 ? 14 : 5);
   if (stomp){ b.state = 'hurt'; b.t = 60; } // un coup sur la tête le réveille : un seul coup par étourdissement score += 300; sfx.bossHit();
   burst(b.x + b.w/2, b.y, '#ffd27a', 10);
-  if (b.hp <= 0){ b.hp = 0; b.dead = true; b.deathT = 0; score += 5000; sfx.bossDie(); shots = []; shake(8); }
+  if (b.hp <= 0){ b.hp = 0; b.dead = true; b.deathT = 0; score += 5000; sfx.bossDie(); shots = []; shake(8); ach(b.type); if (!p.sword && !p.bow && !chak) ach('unarmed'); }
 }
 function bossReward(){
   const b = boss, gx = b.x + b.w/2;
-  if (maxHp < 24) maxHp += 4; hp = maxHp; tip('maxHeart'); burst(p.x + p.w/2, p.y, '#ff8fa3', 16); // cœur du scorpion : +1 cœur pour la partie
+  if (maxHp < 24) maxHp += 4; hp = maxHp; if (maxHp >= 24) ach('hearts'); tip('maxHeart'); burst(p.x + p.w/2, p.y, '#ff8fa3', 16); // cœur du scorpion : +1 cœur pour la partie
   drops.push({ x: gx - 20, y: b.y - 10, w: 10, h: 10, vy: -4, life: 99999, gone: false, onGround: false });
   const y = 12 * T - 13;
   gemDrops.push(makeGem(gx, b.y, 'diamond'));
@@ -2100,7 +2226,7 @@ function updateArrows(){
 function hitEnemy(e, dmg){
   if (e.inv > 0) return;
   e.hp -= dmg; e.inv = 40; e.flash = 7; freeze(3); sfx.bossHit(); burst(e.x + e.w/2, e.y + 4, '#ffd27a', 6);
-  if (e.hp <= 0){ e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 400; loot(e); loot(e); }
+  if (e.hp <= 0){ e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 400; loot(e); loot(e); if (e.kind === 'golem') stat('golems'); }
 }
 function groundWalk(e, vx){
   // déplacement au sol commun : demi-tour contre un mur ou au bord d'un trou
@@ -2261,6 +2387,7 @@ function updateShots(){
   shots = shots.filter(s => !s.gone);
 }
 function hurt(dmg = 4){
+  levelHurt = true;
   if (p.big){
     p.big = false; p.pendingGrow = false; p.growT = 0;
     p.x += (BIG_W - SMALL_W)/2; p.y += BIG_H - SMALL_H; p.w = SMALL_W; p.h = SMALL_H;
@@ -2339,6 +2466,7 @@ function updatePlayer(){
   if (moveX(p, p.vx)) p.vx = 0;
   const wasAir = !p.onGround;
   moveY(p, p.vy, bumpTile);
+  if (p.onGround) p.combo = 0;
   if (p.onGround && wasAir && p.vy === 0){ burst(p.x+p.w/2, p.y+p.h, TH.g.topEdge, 4); p.sq = 0.72; }
   p.sq = (p.sq || 1) + (1 - (p.sq || 1)) * 0.22;
   if (p.onGround && Math.abs(p.vx) > 1.6 && tick % 7 === 0) particles.push({ x: p.x + (p.vx > 0 ? 2 : p.w - 2), y: p.y + p.h - 1, vx: -Math.sign(p.vx) * 0.5, vy: -0.5, life: 16, color: TH.g.topEdge, g: 0.02 });
@@ -2398,7 +2526,7 @@ function updateEnemies(){
     }
     if (!p.dying && overlap(p, e, 1)){
       if (p.vy > 0 && (p.y + p.h) - e.y < 9){
-        e.dead = true; e.t = 30; e.flip = e.kind === 'vulture' || e.kind === 'magpie'; e.vy = 0; loot(e); freeze(3); burst(e.x + e.w/2, e.y, '#ffffff', 4);
+        e.dead = true; e.t = 30; e.flip = e.kind === 'vulture' || e.kind === 'magpie'; e.vy = 0; loot(e); freeze(3); stat('stomps'); p.combo = (p.combo || 0) + 1; if (p.combo >= 3) ach('combo'); burst(e.x + e.w/2, e.y, '#ffffff', 4);
         p.vy = keys.jump ? -7.8 : -4.8; p.coyote = 0;
         score += (e.fast || e.kind !== 'beetle') ? 200 : 100; sfx.stomp(); burst(e.x+7, e.y+5, e.kind === 'cobra' ? '#c9a227' : e.kind === 'vulture' ? '#efe6da' : e.kind === 'worm' ? '#d9a07a' : e.kind === 'jerboa' ? '#e3b77a' : e.kind === 'magpie' ? '#f4f0ff' : e.fast ? '#f0806a' : '#8f7be0', 6);
       } else if (p.inv <= 0) contactHit(e);
@@ -2446,15 +2574,16 @@ function renderTip(){
 function nextTip(){
   tipKey = tipQueue.shift() || null;
   if (!tipKey){ toastEl.hidden = true; return; }
+  if (typeof tipKey === 'object'){ const a = tipKey; tipKey = '_announce'; toastTitle.textContent = a.title; toastText.textContent = a.text; toastEl.hidden = false; tipT = 240; toastEl.style.animation = 'none'; void toastEl.offsetWidth; toastEl.style.animation = ''; return; }
   renderTip(); toastEl.hidden = false; tipT = 330;
   toastEl.style.animation = 'none'; void toastEl.offsetWidth; toastEl.style.animation = '';
 }
 function updateTips(){ if (tipKey && --tipT <= 0) nextTip(); }
 function update(){
   tick++;
+  updateTips(); // les notifications défilent aussi sur les écrans de menu
   if (state !== 'play') return;
   frames++;
-  updateTips();
   if (timeLimit && !p.dying){ // contre-la-montre
     const left = timeLeft();
     if (left <= 0){ timedOut = true; burst(p.x + p.w/2, p.y, '#ff6a4a', 14); shake(5); killPlayer(false); }
@@ -2659,7 +2788,7 @@ function updateGeysers(){
     if (g.st === 'warn'){ if (--g.t <= 0){ g.st = 'burst'; g.t = 55; sfx.burn(); } continue; } // 45 images d'avertissement : la lave bouillonne
     g.t--; g.h = g.t > 45 ? (55 - g.t) * 7.2 : g.t < 10 ? g.t * 7.2 : 72;
     const box = { x: g.c * T + 2, y: QS_ROW * T - g.h, w: T - 4, h: g.h };
-    if (!p.dying && g.h > 4 && p.inv <= 0 && overlap(p, box)){ hurt(4); p.vy = -6.5; }
+    if (!p.dying && g.h > 4 && p.inv <= 0 && overlap(p, box)){ hurt(4); p.vy = -6.5; if (!p.dying) ach('lava'); }
     if (g.t <= 0) g.gone = true;
   }
   geysers = geysers.filter(g => !g.gone);
