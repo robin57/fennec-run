@@ -1234,9 +1234,13 @@ const TRACKS = {
 };
 // Simoun : mêmes rythmes, mais gammes sombres (phrygien, hijaz, locrien) et plus grave
 const SIM_SCALES = { 0: [0,1,3,5,7,8,10], 1: [0,1,4,5,7,8,10], 2: [0,1,3,5,7,8,10], 3: [0,1,3,5,6,8,10], boss: [0,1,3,5,6,8,11] };
-for (const k in TRACKS){ // mélodie : quelques notes tenues, toujours les mêmes pour une piste
-  const tr = TRACKS[k], r = mulberry32(tr.seed); tr.lead = [];
-  for (let st = 0; st < 64; st++) tr.lead.push([0, 3, 6, 10, 12].includes(st % 16) && r() < 0.55 ? [0, 2, 4, 1, 3][Math.floor(r() * 5)] : null);
+// Morceaux de 16 mesures : couplet A, variante A', refrain B (autres accords, mélodie plus dense), retour de A
+const SONG = ['A', 'A2', 'B', 'A'];
+for (const k in TRACKS){
+  const tr = TRACKS[k], P = tr.prog;
+  tr.progB = [P[2], P[3], P[1], P[0] + 4];
+  const melody = (seed, dens) => { const r = mulberry32(seed), out = []; for (let st = 0; st < 64; st++) out.push([0, 3, 6, 10, 12].includes(st % 16) && r() < dens ? [0, 2, 4, 1, 3][Math.floor(r() * 5)] : null); return out; };
+  tr.leads = { A: melody(tr.seed, 0.55), A2: melody(tr.seed + 1, 0.55), B: melody(tr.seed + 2, 0.8) };
 }
 let mus = { key: null, next: 0, step: 0 }, musGain = null, noiseBuf = null;
 const midi = n => 440 * Math.pow(2, (n - 69) / 12);
@@ -1260,14 +1264,17 @@ function mDrum(t, kind){
   n.connect(f).connect(g).connect(musGain); n.start(t); n.stop(t + 0.06);
 }
 function mStep(tr, st, t){
-  const sc = simoun ? SIM_SCALES[mus.track] : tr.scale, len = sc.length, b = st % 16, deg = tr.prog[Math.floor(st / 16) % tr.prog.length], root = tr.root - (simoun ? 5 : 0);
+  const part = SONG[Math.floor(st / 64)], ps = st % 64, bar = Math.floor(ps / 16), fill = bar === 3 && ps % 16 >= 12; // roulement en fin de section
+  const sc = simoun ? SIM_SCALES[mus.track] : tr.scale, len = sc.length, b = st % 16, deg = (part === 'B' ? tr.progB : tr.prog)[bar], root = tr.root - (simoun ? 5 : 0);
   const tone = (d, oct) => midi(root + sc[((d % len) + len) % len] + 12 * (oct + Math.floor(d / len)));
   if (simoun && b === 0) mNote(t, tone(0, -2), 1.7, 'sawtooth', 0.035); // bourdon grave
   if (tr.bass.includes(b)) mNote(t, tone(deg, -1), 0.22, 'triangle', 0.09);
-  if (b % 2 === 0) mNote(t, tone(deg + tr.arp[(b / 2) % tr.arp.length], 1), 0.12, simoun ? 'sawtooth' : 'square', simoun ? 0.016 : 0.02);
-  if (tr.lead[st] !== null) mNote(t, tone(deg + tr.lead[st], simoun ? 1 : 2), simoun ? 0.5 : 0.38, simoun ? 'triangle' : 'sine', 0.03);
-  if (tr.kick.includes(b)) mDrum(t, 'kick');
-  if (b % 4 === 2) mDrum(t, 'hat'); else if (simoun && b % 2 === 1) mDrum(t, 'soft');
+  const arp = part === 'B' ? tr.arp.slice().reverse() : tr.arp, up = part === 'A2' && b >= 8 ? 1 : 0;
+  if (b % 2 === 0) mNote(t, tone(deg + arp[(b / 2) % arp.length], 1 + up), 0.12, simoun ? 'sawtooth' : 'square', simoun ? 0.016 : 0.02);
+  const ld = tr.leads[part][ps];
+  if (ld !== null) mNote(t, tone(deg + ld, simoun ? 1 : 2), simoun ? 0.5 : 0.38, simoun ? 'triangle' : 'sine', 0.03);
+  if (tr.kick.includes(b) || (part === 'B' && b % 4 === 0)) mDrum(t, 'kick');
+  if (fill) mDrum(t, 'hat'); else if (b % 4 === 2) mDrum(t, 'hat'); else if (simoun && b % 2 === 1) mDrum(t, 'soft');
 }
 function musicTick(){
   // la musique ne joue que pendant la partie, et se tait avec le bouton Son
@@ -1277,7 +1284,7 @@ function musicTick(){
   if (key !== mus.key){ mus.key = key; mus.track = tk; mus.next = ac.currentTime + 0.05; mus.step = 0; }
   const sp = 60 / (tr.bpm + (simoun ? -6 : 0) + (level % 20 === 0 ? 10 : 0)) / 4;
   if (mus.next < ac.currentTime) mus.next = ac.currentTime + 0.02; // après une pause : on repart sans rattrapage
-  while (mus.next < ac.currentTime + 0.25){ mStep(tr, mus.step, mus.next); mus.next += sp; mus.step = (mus.step + 1) % 64; }
+  while (mus.next < ac.currentTime + 0.25){ mStep(tr, mus.step, mus.next); mus.next += sp; mus.step = (mus.step + 1) % 256; }
 }
 
 /* ---------- Input ---------- */
