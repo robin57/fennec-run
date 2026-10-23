@@ -304,7 +304,10 @@ const STR = {
       portal: () => 'Le portail mène au désert suivant. Bonne route !',
     },
     winTitle: 'Le désert est traversé !', winTitleSim: 'Le Simoun est dompté !',
-    winText: s => 'Le dernier scorpion géant est tombé. Score final : ' + s + ' points.',
+    winText: s => 'Le djinn des sables est vaincu. Score final : ' + s + ' points.',
+    beyondBtn: 'Continuer', beyondInfo: 'Continuer : tu gardes ton score, tes gemmes, tes cœurs et ton équipement, et tu t’enfonces au-delà du Simoun. Chaque désert y est plus long, plus peuplé, et frappe plus fort que le précédent. Personne n’en revient : le but est d’aller le plus loin possible.',
+    beyondTitle: 'Au-delà du Simoun', beyondText: l => 'Niveau ' + l + ' : les déserts s’allongent, les ennemis se multiplient et chaque coup fait plus mal. Jusqu’où iras-tu ?',
+    hintBeyond: l => 'Niveau ' + l + ' : au-delà du Simoun, un désert encore plus long et plus peuplé. Les coups font ×' + beyondDmg(l).toFixed(1).replace('.', ',') + '.',
     simounInfo: 'Mode Simoun débloqué : retour au niveau 1, sans rien en poche, dans des déserts en cendres où les sables mouvants sont devenus de la lave, qui crache des gerbes de feu. Les coups font 1,5 fois plus mal (¾ de cœur pour un coup léger, 1 cœur ½ pour un coup lourd) et les scorpions géants te visent directement. À l’échoppe, tout est déjà découvert.',
     playSimoun: 'Mode Simoun', replaySimoun: 'Rejouer en Simoun', restartSimoun: 'Recommencer en Simoun',
     relockInfo: 'Attention : une nouvelle partie normale fait perdre l’accès au Simoun, il faudra de nouveau franchir le niveau 20.', simLabel: 'Simoun',
@@ -412,7 +415,10 @@ const STR = {
       portal: () => 'The portal leads to the next desert. Good luck!',
     },
     winTitle: 'The desert is crossed!', winTitleSim: 'The Simoom is tamed!',
-    winText: s => 'The last giant scorpion has fallen. Final score: ' + s + ' points.',
+    winText: s => 'The sand djinn is defeated. Final score: ' + s + ' points.',
+    beyondBtn: 'Continue', beyondInfo: 'Continue: keep your score, gems, hearts and gear, and push on beyond the Simoom. Every desert there is longer, more crowded and hits harder than the last. Nobody comes back: the goal is to get as far as you can.',
+    beyondTitle: 'Beyond the Simoom', beyondText: l => 'Level ' + l + ': deserts grow longer, enemies multiply and every hit hurts more. How far will you go?',
+    hintBeyond: l => 'Level ' + l + ': beyond the Simoom, an even longer and more crowded desert. Hits deal ×' + beyondDmg(l).toFixed(1) + '.',
     simounInfo: 'Simoom mode unlocked: back to level 1, with nothing in your pockets, through deserts of ash where quicksand has turned into lava that spits jets of fire. Hits hurt 1.5 times more (¾ of a heart for a light hit, 1½ hearts for a heavy one) and giant scorpions aim straight at you. At the shop, everything is already discovered.',
     playSimoun: 'Simoom mode', replaySimoun: 'Play Simoom again', restartSimoun: 'Restart in Simoom',
     relockInfo: 'Careful: a new normal game removes access to Simoom, you will have to clear level 20 again.', simLabel: 'Simoom',
@@ -872,7 +878,23 @@ function canCross(gap, rise){
   if (-peak < rise * T + 6) return false;
   return gap * T + 6 <= f * SWORD_MAXV * 0.85; // vitesse avec cimeterre : le niveau reste faisable même ralenti
 }
+const beyondDmg = L => L > 20 ? Math.min(1.5 + 0.1 * (L - 20), 3) : 1.5; // au-delà du Simoun : les coups font de plus en plus mal
 function difficulty(L){
+  const D = baseDifficulty(L);
+  if (L <= 20) return D;
+  const k = L - 20; // au-delà du Simoun : plus long, plus peuplé, plus rapide, sans plafond raisonnable
+  return Object.assign(D, {
+    len: Math.min(260 + 25 * k, 560),
+    enemyP: 1, pairP: Math.min(0.45 + 0.04 * k, 0.8),
+    speed: Math.min(1.05 + 0.04 * k, 1.7), fastP: Math.min(0.55 + 0.03 * k, 0.85),
+    cobraP: Math.min(0.45 + 0.03 * k, 0.7), spitCd: Math.max(70 - 3 * k, 40), venomV: Math.min(2.8 + 0.05 * k, 3.4),
+    vultureP: Math.min(0.3 + 0.03 * k, 0.55), vultCd: Math.max(80 - 3 * k, 45),
+    jackalP: Math.min(0.35 + 0.03 * k, 0.6), bscorpP: Math.min(0.35 + 0.03 * k, 0.6), jerboaP: Math.min(0.35 + 0.03 * k, 0.6),
+    magpieP: Math.min(0.25 + 0.02 * k, 0.4), golemP: Math.min(0.3 + 0.03 * k, 0.55), golemCd: Math.max(110 - 4 * k, 60),
+    gapP: Math.min(0.34 + 0.01 * k, 0.42), crumble: Math.max(34 - k, 20), figs: 0, ledgeP: 0.2,
+  });
+}
+function baseDifficulty(L){
   return {
     len: Math.min(110 + 25 * (L - 1), 260),
     gapP: Math.min(0.12 + 0.04 * L, 0.34),
@@ -1239,6 +1261,11 @@ function generateBoss(L, seed){
   rnd();
 }
 function makeBoss(L, slot = 0){
+  const b = makeBoss0(L, slot);
+  if (L > 20){ b.hp = b.maxHp = Math.round(b.maxHp * (1 + 0.12 * (L - 20))); } // au-delà : +12 % de vie par niveau
+  return b;
+}
+function makeBoss0(L, slot = 0){
   const twin = simoun && L >= 10;
   if (L % 20 === 10 && slot === 0){ // niveau 10 : le ver des sables géant
     const hpMax = Math.round(18 * (twin ? 0.8 : 1) * (simoun ? 1.3 : 1));
@@ -1550,6 +1577,8 @@ const ACH = [
   { id: 'lava',     fr: ['Pieds brûlés', 'Être projeté par une gerbe de feu… et survivre.'], en: ['Hot feet', 'Get launched by a fire jet… and survive.'] },
   { id: 'apnea',    fr: ['Apnée', 'Rester 7 secondes sous l’eau d’affilée sans se noyer.'], en: ['Deep breath', 'Stay underwater for 7 seconds straight without drowning.'] },
   { id: 'fashion',  fr: ['Coquet', 'Posséder 3 apparences de fennec.'], en: ['Dapper', 'Own 3 fennec looks.'] },
+  { id: 'beyond25', fr: ['Au-delà', 'Atteindre le niveau 25 après avoir dompté le Simoun.'], en: ['Beyond', 'Reach level 25 after taming the Simoom.'] },
+  { id: 'beyond30', fr: ['Légende des sables', 'Atteindre le niveau 30.'], en: ['Legend of the sands', 'Reach level 30.'] },
   { id: 'eco',      fr: ['Fourmi prévoyante', 'Finir un niveau 15 avec au moins 200 gemmes en poche.'], en: ['Thrifty ant', 'Clear level 15 with at least 200 gems in your pocket.'] },
 ];
 let achDone = {}, stats = {}, scores = [], lastEntry = null, subView = null, runLost = 0, levelHurt = false;
@@ -1662,6 +1691,7 @@ function quitToTitle(){
 }
 function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   level = n;
+  if (simoun && level >= 25) ach('beyond25'); if (simoun && level >= 30) ach('beyond30');
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
   spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120; makeSigns(); levelHurt = false;
@@ -1687,7 +1717,7 @@ function menuAction(){
   if (state === 'title' && readSave()) continueRun();
   else if (state === 'clear') loadLevel(level + 1, p && p.big, p ? p.shield : 0, p && p.sword, p && p.bow);
   else if (state === 'pause') togglePause();
-  else if (state === 'victory'){ clearSave(); startRun(true); }
+  else if (state === 'victory'){ if (victorySim) continueBeyond(); else { clearSave(); startRun(true); } }
   else startRun(state === 'over' && simounUnlocked()); // après un game over : Simoun si débloqué, sinon partie normale
 }
 playBtn.addEventListener('click', menuAction);
@@ -1824,7 +1854,18 @@ function winGame(){
   ach('djinn'); if (simoun) ach('simoun'); if (runLost === 0) ach('deathless');
   try { localStorage.setItem('fennec-simoun', '1'); } catch(e){}
   const S0 = score, wasSim = simoun;
-  ui(() => { showOverlay(t(wasSim ? 'winTitleSim' : 'winTitle'), t('winText', S0), t('simounInfo') + ' ' + t('relockInfo'), t(wasSim ? 'replaySimoun' : 'playSimoun'), t('newGame')); renderNameEntry(); });
+  victorySim = wasSim;
+  ui(() => {
+    if (wasSim){ showOverlay(t('winTitleSim'), t('winText', S0), t('beyondInfo') + ' ' + t('relockInfo'), t('beyondBtn'), t('newGame')); simBtn.hidden = false; simBtn.textContent = t('replaySimoun'); }
+    else showOverlay(t('winTitle'), t('winText', S0), t('simounInfo') + ' ' + t('relockInfo'), t('playSimoun'), t('newGame'));
+    renderNameEntry();
+  });
+}
+let victorySim = false;
+function continueBeyond(){ // après le Simoun : on garde tout et on continue au niveau 21
+  if (lastEntry){ scores = scores.filter(x => x !== lastEntry); lastEntry = null; try { localStorage.setItem('fennec-scores', JSON.stringify(scores)); } catch(e){} } // la partie sera classée à sa vraie fin
+  loadLevel(level + 1, p && p.big, p ? p.shield : 0, p && p.sword, p && p.bow);
+  announce(t('beyondTitle'), t('beyondText', level));
 }
 function winLevel(){
   if (level === 1) ach('first');
@@ -1832,7 +1873,7 @@ function winLevel(){
   if (!isBossLevel(level) && frames < 45 * 60) ach('speed');
   if (timeLimit){ ach('timed'); if (timeLeft() < 300) ach('clutch'); }
   if (level === 15 && gems >= 200) ach('eco');
-  if (level % 20 === 0){ score += 300 * level; return winGame(); }
+  if (level === 20){ score += 300 * level; return winGame(); }
   state = 'clear';
   const secs = Math.floor(frames/60), par = Math.round(W / 5);
   const bonus = 300 * level + Math.max(0, par - secs) * 20 + (timeLimit ? Math.floor(timeLeft() / 60) * 50 : 0); // contre-la-montre : 50 points par seconde restante
@@ -1841,7 +1882,7 @@ function winLevel(){
   const L0 = level, B0 = bonus, S0 = score, T0 = fmtTime(frames), N = level + 1;
   ui(() => {
     const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang][simoun ? 'simThemes' : 'themes'][themeFor(N)]) + (themeFor(N) === 2 && !simoun ? t('hintWater') : '') : '';
-    const hint = isBossLevel(N) ? (N % 20 === 0 ? t('hintDjinn') : N % 20 === 10 ? t('hintWorm') : N % 20 === 15 ? t('hintRoyal') : t('hintBoss', N)) + (simoun && N >= 10 ? t('hintDjinnSim') : '') : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
+    const hint = N > 20 && !isBossLevel(N) ? t('hintBeyond', N) : isBossLevel(N) ? (N % 20 === 0 ? t('hintDjinn') : N % 20 === 10 ? t('hintWorm') : N % 20 === 15 ? t('hintRoyal') : t('hintBoss', N)) + (simoun && N >= 10 ? t('hintDjinnSim') : '') : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
     showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + (isTimedLevel(N) ? t('hintTimed') : '') + hint, t('next', N));
     renderShop();
   });
@@ -2498,7 +2539,7 @@ function hurt(dmg = 4){
     p.x += (BIG_W - SMALL_W)/2; p.y += BIG_H - SMALL_H; p.w = SMALL_W; p.h = SMALL_H;
     p.inv = 120; sfx.shrink(); burst(p.x + p.w/2, p.y, '#ffe6a8', 8);
   } else {
-    hp -= simoun ? Math.round(dmg * 1.5) : dmg; tip('heart'); // Simoun : dégâts ×1,5
+    hp -= simoun ? Math.round(dmg * beyondDmg(level)) : dmg; tip('heart'); // Simoun : dégâts ×1,5
     if (hp <= 0){ hp = 0; killPlayer(false); }
     else { p.inv = 100; sfx.ouch(); shake(3); freeze(4); burst(p.x + p.w/2, p.y + 4, '#e0475e', 8); p.vy = Math.min(p.vy, -3); }
   }

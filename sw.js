@@ -1,5 +1,5 @@
 // Fennec Run : cache hors ligne. Changer VERSION force la mise à jour chez les joueurs.
-const VERSION = 'fennec-run-c60403ec';
+const VERSION = 'fennec-run-07b107fe';
 const FILES = ['./', './index.html', './manifest.webmanifest', './apple-touch-icon.png', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
