@@ -121,6 +121,9 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 .ach b{font-family:var(--display);font-weight:700;color:var(--ember);font-size:13px}
 .ach .ic{grid-row:span 2;align-self:center;font-family:var(--display);color:var(--gem);font-size:16px}
 .ach.locked{opacity:.45}.ach.locked .ic{color:var(--dim)}
+.skin-ic{width:32px;height:32px;image-rendering:pixelated;grid-row:span 2;align-self:center}
+.skin-pick{color:var(--sand);cursor:pointer;text-align:left;font:inherit}.skin-pick.on{border-color:var(--ember)}.skin-pick:disabled{cursor:default}
+.shop-item.skin{grid-template-columns:auto 1fr;column-gap:6px;text-align:left}.shop-item.skin .skin-ic{width:24px;height:24px;grid-row:span 3}
 .scores{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
 .scores td{padding:3px 6px;border-bottom:1px solid var(--edge)}.scores td:nth-child(3){text-align:right;color:var(--ember)}
 .scores tr.me td{color:var(--gem)}
@@ -199,7 +202,7 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
             <button class="play alt" id="altBtn" type="button" hidden>Nouvelle partie</button>
             <button class="play sim" id="simBtn" type="button" data-i18n="playSimoun" hidden>Mode Simoun</button>
           </div>
-          <div class="menu-btns" id="menuBtns" hidden><button class="icon-btn" id="scoresBtn" type="button">Scores</button><button class="icon-btn" id="achBtn" type="button">Succès</button></div>
+          <div class="menu-btns" id="menuBtns" hidden><button class="icon-btn" id="scoresBtn" type="button">Scores</button><button class="icon-btn" id="achBtn" type="button">Succès</button><button class="icon-btn" id="skinsBtn" type="button">Apparence</button></div>
         </div>
       </div>
       <div class="pad" data-i18n-aria="pad" aria-label="Commandes tactiles">
@@ -325,7 +328,11 @@ const STR = {
       maxHeart: ['Cœur en plus', '+1 cœur max'],
     },
     owned: 'déjà là', locked: 'à découvrir',
-    shopCats: { care: 'Soins', items: 'Objets', weapons: 'Armes', up: 'Améliorations' },
+    shopCats: { care: 'Soins', items: 'Objets', weapons: 'Armes', up: 'Améliorations', skins: 'Apparences', skinsAch: 'Récompenses' },
+    skinsShort: { snow: 'Neige', night: 'Nocturne', touareg: 'Touareg', rose: 'Rose', gold: 'Doré', ember: 'Braise' },
+    skins: { classic: 'Fennec des sables', snow: 'Fennec des neiges', night: 'Fennec nocturne', touareg: 'Fennec touareg', rose: 'Rose des sables', gold: 'Fennec doré', ember: 'Fennec de braise' },
+    skinWear: 'porter', skinWorn: 'porté', skinKeep: 'gardé pour toujours', skinAch: n => 'succès : ' + n, skinAchLbl: '★ succès',
+    skinsBtn: 'Apparence', skinsTitle: 'Apparence du fennec', skinsText: 'Les apparences achetées à l’échoppe ou gagnées avec les succès restent à toi, même après un game over.',
     tips: {
       fig: ['Figue de barbarie', () => 'Le fennec grandit : le prochain coup le fait juste rapetisser, sans perdre de cœur. Déjà grand ? La figue rend un cœur.'],
       heart: ['Cœurs', () => 'Venin, pierres, ondes de choc et scarabées bleus retirent un demi-cœur ; les ennemis dangereux, un cœur entier. À zéro, tu perds une vie. Chaque lanterne allumée rend un demi-cœur.'],
@@ -335,7 +342,7 @@ const STR = {
       bow: ['Arc', m => (m ? 'Bouton ARC' : 'Touche X') + ' pour tirer : 12 flèches qui tuent à distance, à recharger à l’échoppe. L’arc remplace l’épée et le bouclier.'],
       chakram: ['Chakram', m => (m ? 'Bouton ANNEAU' : 'Touche X') + ' pour lancer l’anneau : il traverse les ennemis et revient dans ta main. Pas de munitions, mais un seul lancer à la fois.'],
       pad: ['Manette', () => 'Stick ou croix : courir · A : sauter · X ou B : frapper / tirer · Start : pause.'],
-      water: ['Eau', () => 'Tu nages : chaque saut est une brasse vers le haut. La tête hors de l’eau, saute pour sortir. Au fond, des gemmes valent triple.'],
+      water: ['Eau', () => 'Tu nages : chaque saut est une brasse vers le haut. La tête hors de l’eau, saute pour sortir. Au fond, des gemmes valent triple. Surveille les bulles au-dessus du fennec : quand elles sont épuisées, il se noie peu à peu.'],
       magpie: ['Pie des sables', () => 'Elle t’a volé ton équipement ! Touche-la avant qu’elle quitte l’écran pour le récupérer.'],
       feather: ['Plume', () => 'Pendant 20 secondes, tu sautes plus haut et tu retombes en planant.'],
       speed: ['Babouches du vent', () => 'Pendant 10 secondes, tu cours 50 % plus vite. Attention à ne pas foncer dans un trou !'],
@@ -429,7 +436,11 @@ const STR = {
       maxHeart: ['Extra heart', '+1 max heart'],
     },
     owned: 'owned', locked: 'not found yet',
-    shopCats: { care: 'Care', items: 'Items', weapons: 'Weapons', up: 'Upgrades' },
+    shopCats: { care: 'Care', items: 'Items', weapons: 'Weapons', up: 'Upgrades', skins: 'Looks', skinsAch: 'Rewards' },
+    skinsShort: { snow: 'Snow', night: 'Night', touareg: 'Tuareg', rose: 'Rose', gold: 'Golden', ember: 'Ember' },
+    skins: { classic: 'Sand fennec', snow: 'Snow fennec', night: 'Night fennec', touareg: 'Tuareg fennec', rose: 'Desert rose', gold: 'Golden fennec', ember: 'Ember fennec' },
+    skinWear: 'wear', skinWorn: 'worn', skinKeep: 'yours for good', skinAch: n => 'achievement: ' + n, skinAchLbl: '★ achievement',
+    skinsBtn: 'Looks', skinsTitle: 'Fennec looks', skinsText: 'Looks bought at the shop or earned with achievements stay yours, even after a game over.',
     tips: {
       fig: ['Prickly pear', () => 'The fennec grows: the next hit only shrinks it, without costing a heart. Already big? The pear gives a heart back.'],
       heart: ['Hearts', () => 'Venom, rocks, shockwaves and blue beetles take half a heart; dangerous enemies take a whole one. At zero, you lose a life. Each lantern you light gives half a heart back.'],
@@ -439,7 +450,7 @@ const STR = {
       bow: ['Bow', m => (m ? 'BOW button' : 'Press X') + ' to shoot: 12 arrows that kill from a distance, refilled at the shop. The bow replaces the sword and the shield.'],
       chakram: ['Chakram', m => (m ? 'RING button' : 'Press X') + ' to throw the ring: it cuts through enemies and comes back to your hand. No ammo, but one throw at a time.'],
       pad: ['Gamepad', () => 'Stick or d-pad: run · A: jump · X or B: strike / shoot · Start: pause.'],
-      water: ['Water', () => 'You are swimming: each jump is a stroke upwards. With your head above water, jump to get out. Gems at the bottom are worth triple.'],
+      water: ['Water', () => 'You are swimming: each jump is a stroke upwards. With your head above water, jump to get out. Gems at the bottom are worth triple. Watch the bubbles above the fennec: once they run out, it slowly drowns.'],
       magpie: ['Sand magpie', () => 'It stole your gear! Hit it before it leaves the screen to get it back.'],
       feather: ['Feather', () => 'For 20 seconds, you jump higher and glide down slowly.'],
       speed: ['Wind slippers', () => 'For 10 seconds, you run 50% faster. Careful not to rush into a pit!'],
@@ -543,8 +554,29 @@ const LEGS = {
   run4:[".......oooo.....",".......dd.dd....","................"],
   jump:["...oo....oo.....","...d......d.....","................"],
 };
-const FOX = {};
-for (const k in LEGS){ const s = sprite(FOX_TOP.concat(LEGS[k]), FOX_PAL); FOX[k] = [s, flipped(s)]; }
+/* apparences du fennec : une palette chacune (le chèche ajoute quelques pixels) */
+const SKINS = [
+  { id: 'classic', pal: {} },
+  { id: 'snow',    price: 80,  pal: { o:'#eef1f4', d:'#aeb9c6', w:'#ffffff', k:'#26283a', p:'#f4b3c2' } },
+  { id: 'night',   price: 120, pal: { o:'#56679a', d:'#323c6a', w:'#cdd7f2', k:'#0c0c1c', p:'#a58fd0' } },
+  { id: 'touareg', price: 160, pal: { s:'#3550a8', S:'#22357a' }, scarf: true },
+  { id: 'rose',    price: 220, pal: { o:'#e7a49a', d:'#b26a68', w:'#fff0ea', k:'#3a1c22', p:'#ffc7c0' } },
+  { id: 'gold',    achId: 'djinn',  pal: { o:'#f2c94c', d:'#b8862a', w:'#fff6cc', k:'#3a2a10', p:'#ffd98a' }, glow: '#ffe68a' },
+  { id: 'ember',   achId: 'simoun', pal: { o:'#e2552a', d:'#8a2618', w:'#ffd06a', k:'#1a0806', p:'#ffae5a' }, glow: '#ff9a3a' },
+];
+const SCARF_ROWS = { 6: "......owwwwwwkS.", 7: "..d....sssssSS..", 8: ".ddo..osssssoS.." }; // chèche indigo noué au cou
+const FOX_SKINS = {};
+function foxFor(id){
+  if (FOX_SKINS[id]) return FOX_SKINS[id];
+  const sk = SKINS.find(x => x.id === id) || SKINS[0], pal = Object.assign({}, FOX_PAL, sk.pal), top = FOX_TOP.slice();
+  if (sk.scarf) for (const r in SCARF_ROWS) top[r] = SCARF_ROWS[r];
+  const set = {};
+  for (const k in LEGS){ const c = sprite(top.concat(LEGS[k]), pal); set[k] = [c, flipped(c)]; }
+  return FOX_SKINS[id] = set;
+}
+let skinCur = 'classic', skinOwned = ['classic'];
+try { const v = JSON.parse(localStorage.getItem('fennec-skins') || 'null'); if (v){ skinOwned = v.owned || skinOwned; skinCur = v.cur || 'classic'; } } catch(e){}
+let FOX = foxFor(skinCur);
 
 const BUG_TOP = [
   "....k......k....",
@@ -1317,6 +1349,7 @@ const sfx = {
   tick:hi=>beep(hi ? 1900 : 1400, hi ? 1900 : 1400, 0.05, 'square', 0.045),
   splash:()=>{beep(700,180,0.18,'triangle',0.05);},
   stroke:()=>beep(380,640,0.07,'sine',0.035),
+  air:()=>beep(900,700,0.06,'square',0.03),
   hop:()=>beep(520,980,0.07,'sine',0.03),
   ouch:()=>{beep(620,220,0.14,'square',0.05);},
   heal:()=>[784,988,1318].forEach((f,i)=>beep(f,f,0.07,'triangle',0.05,i*0.06)),
@@ -1481,9 +1514,10 @@ function spawnPlayer(big, shield, sword, bow){
   const sx = checkpoint && checkpoint.lit ? checkpoint.x : 3*T;
   const topRow = checkpoint && checkpoint.lit ? checkpoint.top : groundTop[3];
   const w = big ? BIG_W : SMALL_W, h = big ? BIG_H : SMALL_H;
-  p = { x:sx, y:topRow*T - h, w, h, vx:0, vy:0, face:0, onGround:false, coyote:0, buf:0, inv:90, dying:false, deadT:0, pit:false, anim:0, big:!!big, pendingGrow:false, growT:0, shield: shield || 0, sword: !!sword, bow: !!bow, atk: 0, atkCd: 0, shoot: 0, feather: 0, speedT: 0 };
+  p = { x:sx, y:topRow*T - h, w, h, vx:0, vy:0, face:0, onGround:false, coyote:0, buf:0, inv:90, dying:false, deadT:0, pit:false, anim:0, big:!!big, pendingGrow:false, growT:0, shield: shield || 0, sword: !!sword, bow: !!bow, atk: 0, atkCd: 0, shoot: 0, feather: 0, speedT: 0, air: AIR_MAX, under: 0, drown: 0 };
   camX = Math.max(0, Math.min(p.x - VW*0.4, W*T - VW));
 }
+const AIR_MAX = 480; // 8 secondes d'air sous l'eau
 const SAVE_KEY = 'fennec-save';
 let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
@@ -1514,6 +1548,8 @@ const ACH = [
   { id: 'allup',    fr: ['Arsenal complet', 'Avoir l’arc, le cimeterre et le bouclier améliorés dans une même partie.'], en: ['Full arsenal', 'Own the bow, scimitar and shield upgrades in one run.'] },
   { id: 'hearts',   fr: ['Cœur de lion', 'Atteindre 6 cœurs.'], en: ['Lionheart', 'Reach 6 hearts.'] },
   { id: 'lava',     fr: ['Pieds brûlés', 'Être projeté par une gerbe de feu… et survivre.'], en: ['Hot feet', 'Get launched by a fire jet… and survive.'] },
+  { id: 'apnea',    fr: ['Apnée', 'Rester 7 secondes sous l’eau d’affilée sans se noyer.'], en: ['Deep breath', 'Stay underwater for 7 seconds straight without drowning.'] },
+  { id: 'fashion',  fr: ['Coquet', 'Posséder 3 apparences de fennec.'], en: ['Dapper', 'Own 3 fennec looks.'] },
   { id: 'eco',      fr: ['Fourmi prévoyante', 'Finir un niveau 15 avec au moins 200 gemmes en poche.'], en: ['Thrifty ant', 'Clear level 15 with at least 200 gems in your pocket.'] },
 ];
 let achDone = {}, stats = {}, scores = [], lastEntry = null, subView = null, runLost = 0, levelHurt = false;
@@ -1550,7 +1586,7 @@ function continueRun(){
 }
 let ovRender = null;
 function ui(render){ ovRender = render; render(); }
-const panelEl = document.getElementById('panel'), menuBtnsEl = document.getElementById('menuBtns'), scoresBtnEl = document.getElementById('scoresBtn'), achBtnEl = document.getElementById('achBtn');
+const panelEl = document.getElementById('panel'), menuBtnsEl = document.getElementById('menuBtns'), scoresBtnEl = document.getElementById('scoresBtn'), achBtnEl = document.getElementById('achBtn'), skinsBtnEl = document.getElementById('skinsBtn');
 function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function showScores(){
   subView = 'scores';
@@ -1587,6 +1623,22 @@ function renderNameEntry(){ // saisie du nom quand la partie entre au classement
   row.append(el('span', '', t('nameLabel', rank)), inp);
   panelEl.replaceChildren(row); panelEl.hidden = false;
 }
+function showSkins(){
+  subView = 'skins';
+  ui(() => {
+    showOverlay(t('skinsTitle'), t('skinsText'), '', t('back'));
+    panelEl.replaceChildren(...SKINS.map(sk => {
+      const have = sk.id === 'classic' || skinUnlocked(sk), a = sk.achId && ACH.find(x => x.id === sk.achId);
+      const d = el('button', 'ach skin-pick' + (have ? '' : ' locked') + (skinCur === sk.id ? ' on' : ''));
+      d.type = 'button'; d.disabled = !have;
+      d.append(skinIcon(sk.id), el('b', '', STR[lang].skins[sk.id]), el('span', '', skinCur === sk.id ? t('skinWorn') : have ? t('skinWear') : a ? t('skinAch', a[lang][0]) : STR[lang].shopCats.skins + ' · ◆ ' + sk.price));
+      d.addEventListener('click', () => { if (!have) return; wearSkin(sk.id); sfx.swordGet(); if (ovRender) ovRender(); });
+      return d;
+    }));
+    panelEl.className = 'panel grid'; panelEl.hidden = false;
+  });
+}
+skinsBtnEl.addEventListener('click', () => { initAudio(); showSkins(); });
 scoresBtnEl.addEventListener('click', () => { initAudio(); showScores(); });
 achBtnEl.addEventListener('click', () => { initAudio(); showAchievements(); });
 function showTitle(){
@@ -1599,7 +1651,7 @@ function showTitle(){
     if (s2) showOverlay('Fennec Run', t('contText', s2.level, s2.score, s2.lives) + (s2.simoun ? ' (' + t('simLabel') + ')' : ''), t('contSmall') + extra, t('cont'), t('newGame'));
     else showOverlay('Fennec Run', t('titleText'), t('titleSmall') + extra, t('play'));
     simBtn.hidden = !simounUnlocked();
-    menuBtnsEl.hidden = false; scoresBtnEl.textContent = t('scoresBtn'); achBtnEl.textContent = t('achBtn', Object.keys(achDone).filter(k => ACH.some(a => a.id === k)).length, ACH.length);
+    menuBtnsEl.hidden = false; scoresBtnEl.textContent = t('scoresBtn'); skinsBtnEl.textContent = t('skinsBtn'); achBtnEl.textContent = t('achBtn', Object.keys(achDone).filter(k => ACH.some(a => a.id === k)).length, ACH.length);
   });
 }
 function quitToTitle(){
@@ -1647,6 +1699,10 @@ simBtn.addEventListener('click', () => { clearSave(); startRun(true); });
 const shopEl = document.getElementById('shop');
 let runFound = new Set(); // objets découverts pendant cette partie (remis à zéro après un game over)
 const found = k => simoun || runFound.has(k);
+function saveSkins(){ try { localStorage.setItem('fennec-skins', JSON.stringify({ owned: skinOwned, cur: skinCur })); } catch(e){} }
+function wearSkin(id){ skinCur = id; FOX = foxFor(id); saveSkins(); if (SKINS.filter(x => x.id !== 'classic' && skinUnlocked(x)).length >= 3) ach('fashion'); }
+function skinUnlocked(sk){ return skinOwned.includes(sk.id) || (sk.achId && achDone[sk.achId]); }
+function skinIcon(id){ const c = document.createElement('canvas'); c.width = 16; c.height = 16; c.className = 'skin-ic'; c.getContext('2d').drawImage(foxFor(id).idle[0], 0, 0); return c; }
 function shopItems(){
   const extra = (maxHp - 12) / 4;
   return [
@@ -1665,6 +1721,13 @@ function shopItems(){
     { id: 'speed', cat: 'items', key: 'speed', price: 25, ok: !buySpeed, owned: buySpeed, buy(){ buySpeed = true; } },
     { id: 'life', cat: 'care', price: 100, ok: true, owned: false, buy(){ lives++; sfx.life(); } },
     { id: 'maxHeart', cat: 'care', key: 'maxHeart', price: 150 + 40 * extra, ok: maxHp < 24, owned: maxHp >= 24, buy(){ maxHp += 4; hp = Math.min(maxHp, hp + 4); } },
+    ...SKINS.filter(sk => sk.id !== 'classic').map(sk => {
+      const have = skinUnlocked(sk), a = sk.achId && ACH.find(x => x.id === sk.achId);
+      return { id: 'skin-' + sk.id, skin: sk.id, cat: sk.achId ? 'skinsAch' : 'skins', price: have ? 0 : (sk.price || 0), ok: (have || !sk.achId) && skinCur !== sk.id, owned: false,
+        label: skinCur === sk.id ? t('skinWorn') : have ? t('skinWear') : sk.achId ? t('skinAchLbl') : null,
+        desc: have ? t('skinKeep') : a ? a[lang][0] : t('skinKeep'),
+        buy(){ if (!skinOwned.includes(sk.id)) skinOwned.push(sk.id); wearSkin(sk.id); } };
+    }),
   ];
 }
 function renderShop(){
@@ -1672,18 +1735,19 @@ function renderShop(){
   shopEl.replaceChildren();
   const h = document.createElement('h3'); h.textContent = t('shopTitle', gems); shopEl.append(h);
   const row = document.createElement('div'); row.className = 'shop-items';
-  const CATS = ['care', 'items', 'weapons', 'up'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'chakram', 'upSword', 'upBow', 'upShield', 'upChakram'];
+  const CATS = ['care', 'items', 'weapons', 'up', 'skins', 'skinsAch'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'chakram', 'upSword', 'upBow', 'upShield', 'upChakram'];
   const list = shopItems().filter(it => !it.simOnly || simoun).sort((a, b) => CATS.indexOf(a.cat) - CATS.indexOf(b.cat) || ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   let cat = null;
   for (const it of list){
     if (it.cat !== cat){ cat = it.cat; const c = document.createElement('span'); c.className = 'shop-cat'; c.textContent = STR[lang].shopCats[cat]; row.append(c); }
     const locked = it.key && !found(it.key);
-    const [name, desc] = locked ? ['???', t('locked')] : STR[lang].shop[it.id];
+    const [name, desc] = locked ? ['???', t('locked')] : it.skin ? [STR[lang].skinsShort[it.skin], it.desc] : STR[lang].shop[it.id];
     const b = document.createElement('button'); b.type = 'button'; b.className = 'shop-item';
     b.disabled = locked || !it.ok || gems < it.price;
     const nb = document.createElement('b'); nb.textContent = name;
     const ds = document.createElement('span'); ds.textContent = desc;
-    const pr = document.createElement('span'); pr.className = 'price'; pr.textContent = locked ? '' : it.owned ? t('owned') : '◆ ' + it.price;
+    const pr = document.createElement('span'); pr.className = 'price'; pr.textContent = locked ? '' : it.label != null ? it.label : it.owned ? t('owned') : '◆ ' + it.price;
+    if (it.skin){ b.classList.add('skin'); b.append(skinIcon(it.skin)); }
     b.append(nb, ds, pr);
     b.addEventListener('click', () => {
       if (b.disabled || locked || gems < it.price || !it.ok) return;
@@ -2461,6 +2525,12 @@ function updatePlayer(){
   const onMud = p.onGround && tileAt(Math.floor((p.x + p.w/2) / T), Math.floor((p.y + p.h + 1) / T)) === 'M';
   const inWater = tileAt(Math.floor((p.x + p.w/2) / T), Math.floor((p.y + p.h * 0.6) / T)) === 'W';
   if (inWater !== !!p.wet){ p.wet = inWater; sfx.splash(); for (let i = 0; i < 8; i++) particles.push({ x: p.x + p.w/2, y: p.y + p.h * 0.6, vx: (Math.random() - 0.5) * 2.5, vy: -Math.random() * 2.5 - 0.5, life: 26, color: '#bfe8ff', g: 0.15 }); if (inWater) tip('water'); }
+  const headUnder = inWater && tileAt(Math.floor((p.x + p.w/2) / T), Math.floor((p.y + 2) / T)) === 'W';
+  if (headUnder){
+    p.under++; if (p.under === 420 && p.air > 0) ach('apnea');
+    if (p.air > 0){ p.air--; if (p.air < 150 && p.air % (p.air < 60 ? 15 : 30) === 0) sfx.air(); }
+    else if (++p.drown >= 60 && p.inv <= 0){ p.drown = 0; const vy = p.vy; hurt(1); p.vy = vy; p.inv = Math.min(p.inv, 60); } // noyade : ¼ de cœur à chaque fois
+  } else { p.under = 0; p.drown = 0; if (p.air < AIR_MAX) p.air = Math.min(AIR_MAX, p.air + 8); }
   if (inWater && tick % 18 === 0) particles.push({ x: p.x + p.w/2 + (Math.random() - 0.5) * 6, y: p.y + 3, vx: 0, vy: -0.5, life: 34, color: '#d8f4ff', g: -0.005 }); // bulles
   const mv = (onMud ? 0.8 : inWater ? 1.1 : (p.sword ? SWORD_MAXV : MAXV)) * (p.speedT > 0 ? 1.5 : 1);
   const acc = p.speedT > 0 ? ACC * 1.5 : ACC;
@@ -3185,6 +3255,16 @@ function draw(){
       if (p.speedT > 0 && Math.abs(p.vx) > 1){ ctx.globalAlpha = 0.3; ctx.drawImage(img, px - Math.sign(p.vx) * 7, py, 16*s, 16*s); ctx.globalAlpha = 1; }
       const hs = (p.sq || 1) * (frame === 'idle' && Math.floor(tick / 32) % 2 ? 0.94 : 1), dw = 16*s*(2 - hs), dh = 16*s*hs; // respire au repos // étiré au saut, écrasé à l'atterrissage
       ctx.drawImage(img, Math.round(px + (16*s - dw) / 2), Math.round(py + 16*s - dh), Math.round(dw), Math.round(dh));
+    }
+    const skg = SKINS.find(x => x.id === skinCur);
+    if (skg && skg.glow && !p.dying && tick % 9 === 0) particles.push({ x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h, vx: 0, vy: -0.3, life: 22, color: skg.glow, g: -0.01 }); // reflets dorés ou braises
+    if (p.air < AIR_MAX && !p.dying){ // jauge d'air : 8 bulles
+      const n = Math.ceil(p.air / (AIR_MAX / 8)), blink = p.air < 150 && Math.floor(tick / 6) % 2;
+      for (let i = 0; i < 8; i++){
+        const bx = px + 8*s - 16 + i * 4, by = py - 7;
+        if (i < n){ if (blink && i === n - 1) continue; ctx.fillStyle = '#d8f4ff'; ctx.fillRect(bx, by, 3, 3); ctx.fillStyle = '#4aa8d8'; ctx.fillRect(bx + 2, by + 2, 1, 1); }
+        else { ctx.fillStyle = 'rgba(216,244,255,.25)'; ctx.fillRect(bx + 1, by + 1, 1, 1); }
+      }
     }
     if (p.shield > 0 && !p.dying && p.atk <= 0) ctx.drawImage(SHIELD, p.face === 0 ? px + 10*s : px - 2*s, py + 6*s, 8*s, 9*s);
     if (p.bow && !p.dying){
