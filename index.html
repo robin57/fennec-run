@@ -269,6 +269,7 @@ const STR = {
       upBow: ['Arc renforcé', '2 flèches, carquois 20'],
       upSword: ['Cimeterre aiguisé', 'portée + coupe les tirs'],
       upShield: ['Bouclier renforcé', '5 coups, dos protégé'],
+      upChakram: ['Chakram jumeau', '2 anneaux, portée +40 %'],
       chakram: ['Chakram', 'revient dans ta main'],
       life: ['Vie', '+1 vie'],
       feather: ['Plume', '20 s, saut plané'],
@@ -351,6 +352,7 @@ const STR = {
       upBow: ['Strong bow', '2 arrows, quiver of 20'],
       upSword: ['Sharp scimitar', 'reach + cuts shots'],
       upShield: ['Strong shield', '5 hits, guards your back'],
+      upChakram: ['Twin chakram', '2 rings, +40% reach'],
       chakram: ['Chakram', 'comes back to you'],
       life: ['Life', '+1 life'],
       feather: ['Feather', '20 s, gliding jumps'],
@@ -1321,7 +1323,7 @@ let state = 'title', p = null, camX = 0, score = 0, gems = 0, lives = 3, gemsToL
 let level = 1, runSeed = 1;
 let hp = 12, maxHp = 12; // en quarts de cœur : 12 = 3 cœurs
 let arrowsLeft = 0; // flèches de l'arc
-let chak = false, ring = null; // chakram (Simoun) : arme tenue, anneau en vol
+let chak = false, rings = [], upChak = false; // chakram (Simoun) : arme tenue, anneaux en vol, chakram jumeau acheté
 let upBow = false, upSword = false, upShield = false; // améliorations d'armes achetées à l'échoppe
 const arrowsMax = () => upBow ? 20 : 12, shieldMax = () => upShield ? 5 : 3;
 let healBought = 0, buyFeather = false, buySpeed = false; // plume / babouches achetées : actives au début du niveau suivant // cœurs achetés à l'échoppe : le prix monte à chaque achat
@@ -1361,13 +1363,13 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, chakram: chak, up: [upBow, upSword, upShield], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, chakram: chak, up: [upBow, upSword, upShield, upChak], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
   const k = sv.q ? 1 : 2; // anciennes sauvegardes : demi-cœurs
-  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; chak = !!sv.chakram; [upBow, upSword, upShield] = (sv.up || [false, false, false]).map(Boolean); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
+  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; chak = !!sv.chakram; [upBow, upSword, upShield, upChak] = [0, 1, 2, 3].map(i => !!(sv.up || [])[i]); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
@@ -1385,7 +1387,7 @@ function showTitle(){
 }
 function quitToTitle(){
   tipQueue = []; tipKey = null; toastEl.hidden = true;
-  state = 'title'; p = null; shots = []; boss = null; bosses = []; ring = null;
+  state = 'title'; p = null; shots = []; boss = null; bosses = []; rings = [];
   buildLevel(3, Math.floor(Math.random() * 1e9));
   showTitle();
 }
@@ -1393,7 +1395,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   level = n;
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
-  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; ring = null; geysers = []; geyserTimer = 120;
+  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120;
   if (buyFeather){ p.feather = 1200; buyFeather = false; }
   if (buySpeed){ p.speedT = 600; buySpeed = false; }
   runStart = snapshot(level, keepBig, keepShield, keepSword, keepBow); writeSave(runStart);
@@ -1405,7 +1407,7 @@ function startRun(mode = false){
   initAudio(); simoun = !!mode;
   if (!simoun){ try { localStorage.removeItem('fennec-simoun'); } catch(e){} } // tout est perdu : il faut refranchir le niveau 20
   runSeed = Math.floor(Math.random() * 1e9);
-  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; chak = false; upBow = upSword = upShield = false; runFound = new Set(); buyFeather = buySpeed = false;
+  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; chak = false; upBow = upSword = upShield = upChak = false; runFound = new Set(); buyFeather = buySpeed = false;
   loadLevel(1, false);
 }
 function menuAction(){
@@ -1437,6 +1439,7 @@ function shopItems(){
     { id: 'chakram', cat: 'weapons', key: 'chakram', simOnly: true, price: 50, ok: !chak, owned: chak, buy(){ chak = true; p.sword = false; p.bow = false; } },
     { id: 'upBow', cat: 'up', key: 'bow', price: 200, ok: !upBow, owned: upBow, buy(){ upBow = true; if (p.bow) arrowsLeft = arrowsMax(); } },
     { id: 'upSword', cat: 'up', key: 'sword', price: 200, ok: !upSword, owned: upSword, buy(){ upSword = true; } },
+    { id: 'upChakram', cat: 'up', key: 'chakram', simOnly: true, price: 200, ok: !upChak, owned: upChak, buy(){ upChak = true; } },
     { id: 'upShield', cat: 'up', key: 'shield', price: 150, ok: !upShield, owned: upShield, buy(){ upShield = true; if (p.shield > 0) p.shield = shieldMax(); } },
     { id: 'feather', cat: 'items', key: 'feather', price: 30, ok: !buyFeather, owned: buyFeather, buy(){ buyFeather = true; } },
     { id: 'speed', cat: 'items', key: 'speed', price: 25, ok: !buySpeed, owned: buySpeed, buy(){ buySpeed = true; } },
@@ -1449,7 +1452,7 @@ function renderShop(){
   shopEl.replaceChildren();
   const h = document.createElement('h3'); h.textContent = t('shopTitle', gems); shopEl.append(h);
   const row = document.createElement('div'); row.className = 'shop-items';
-  const CATS = ['care', 'items', 'weapons', 'up'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'chakram', 'upSword', 'upBow', 'upShield'];
+  const CATS = ['care', 'items', 'weapons', 'up'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'chakram', 'upSword', 'upBow', 'upShield', 'upChakram'];
   const list = shopItems().filter(it => !it.simOnly || simoun).sort((a, b) => CATS.indexOf(a.cat) - CATS.indexOf(b.cat) || ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   let cat = null;
   for (const it of list){
@@ -1513,7 +1516,7 @@ function loseLife(){
       else showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec, t('newGame'));
     });
   } else {
-    hp = maxHp; chak = false; ring = null; spawnPlayer(false); resetBossFight();
+    hp = maxHp; chak = false; rings = []; spawnPlayer(false); resetBossFight();
     if (runStart){ runStart.hp = hp; runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; runStart.chakram = false; writeSave(runStart); }
   }
 }
@@ -1647,7 +1650,7 @@ function stealFrom(e){
   const what = p.bow ? 'bow' : chak ? 'chakram' : p.sword ? 'sword' : p.shield > 0 ? 'shield' : null;
   if (!what){ e.state = 'rise'; e.rt = 0; return; }
   e.loot = what; e.lootN = what === 'bow' ? arrowsLeft : what === 'shield' ? p.shield : 0;
-  if (what === 'bow'){ p.bow = false; arrowsLeft = 0; } else if (what === 'chakram'){ chak = false; ring = null; } else if (what === 'sword') p.sword = false; else p.shield = 0;
+  if (what === 'bow'){ p.bow = false; arrowsLeft = 0; } else if (what === 'chakram'){ chak = false; rings = []; } else if (what === 'sword') p.sword = false; else p.shield = 0;
   e.state = 'flee'; e.dir = (e.x + e.w/2) >= (p.x + p.w/2) ? 1 : -1;
   sfx.steal(); tip('magpie'); burst(p.x + p.w/2, p.y + 4, '#f4f0ff', 10); p.inv = Math.max(p.inv, 30);
 }
@@ -1863,25 +1866,28 @@ function updateGems(){
   gemDrops = gemDrops.filter(g => !g.gone);
 }
 function updateRing(){
-  if (!ring) return;
-  const r = ring; r.spin += 0.5;
-  if (!chak || p.dying){ ring = null; return; }
-  if (!r.back){
-    r.x += r.vx;
-    const tipX = r.vx > 0 ? r.x + r.w : r.x;
-    if (--r.out <= 0 || solid(tileAt(Math.floor(tipX / T), Math.floor((r.y + 4) / T)))){ r.back = true; r.hit.clear(); }
-  } else { // revient vers le fennec, même s'il a bougé
-    const dx = (p.x + p.w/2) - (r.x + 4), dy = (p.y + p.h/2) - (r.y + 4), d = Math.hypot(dx, dy) || 1;
-    r.x += dx / d * 4.8; r.y += dy / d * 4.8;
-    if (d < 10){ ring = null; return; }
+  if (!rings.length) return;
+  if (!chak || p.dying){ rings = []; return; }
+  for (const r of rings){
+    r.spin += 0.5;
+    if (!r.back){
+      r.x += r.vx;
+      const tipX = r.vx > 0 ? r.x + r.w : r.x;
+      if (--r.out <= 0 || solid(tileAt(Math.floor(tipX / T), Math.floor((r.y + 4) / T)))){ r.back = true; r.hit.clear(); }
+    } else { // revient vers le fennec, même s'il a bougé
+      const dx = (p.x + p.w/2) - (r.x + 4), dy = (p.y + p.h/2) - (r.y + 4), d = Math.hypot(dx, dy) || 1;
+      r.x += dx / d * 4.8; r.y += dy / d * 4.8;
+      if (d < 10){ r.caught = true; continue; }
+    }
+    for (const e of enemies){
+      if (e.dead || e.gone || e.h < 6 || r.hit.has(e) || !overlap(r, e)) continue;
+      r.hit.add(e);
+      if (e.kind === 'golem'){ hitEnemy(e, 1); continue; }
+      e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 200; sfx.stomp(); loot(e); burst(e.x + e.w/2, e.y + e.h/2, '#f5a34a', 6);
+    }
+    for (const b of bosses){ if (!b.dead && !b.gone && b.state !== 'sleep' && !r.hit.has(b) && b.inv <= 0 && overlap(r, b)){ r.hit.add(b); boss = b; damageBoss(2); } }
   }
-  for (const e of enemies){
-    if (e.dead || e.gone || e.h < 6 || r.hit.has(e) || !overlap(r, e)) continue;
-    r.hit.add(e);
-    if (e.kind === 'golem'){ hitEnemy(e, 1); continue; }
-    e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 200; sfx.stomp(); loot(e); burst(e.x + e.w/2, e.y + e.h/2, '#f5a34a', 6);
-  }
-  for (const b of bosses){ if (!b.dead && !b.gone && b.state !== 'sleep' && !r.hit.has(b) && b.inv <= 0 && overlap(r, b)){ r.hit.add(b); boss = b; damageBoss(2); } }
+  rings = rings.filter(r => !r.caught);
 }
 function drawChakram(cx, cy, a){
   ctx.fillStyle = '#c9702a'; ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fill();
@@ -2114,10 +2120,10 @@ function updatePlayer(){
   p.buf = jumpPressed ? 7 : p.buf - 1;
   jumpPressed = false;
   if (attackPressed && p.sword && p.atkCd <= 0){ p.atk = 16; p.atkCd = 26; sfx.slash(); }
-  if (attackPressed && chak && !ring && p.atkCd <= 0){ // chakram : un seul anneau en vol à la fois
+  if (attackPressed && chak && rings.length < (upChak ? 2 : 1) && p.atkCd <= 0){ // chakram : 1 anneau en vol, 2 avec le chakram jumeau
     const dir = p.face === 0 ? 1 : -1;
-    ring = { x: dir > 0 ? p.x + p.w : p.x - 8, y: p.y + p.h * 0.4 - 4, w: 8, h: 8, vx: dir * 4.4, out: 30, back: false, hit: new Set(), spin: 0 };
-    p.atkCd = 14; sfx.slash();
+    rings.push({ x: dir > 0 ? p.x + p.w : p.x - 8, y: p.y + p.h * 0.4 - 4 - (rings.length ? 6 : 0), w: 8, h: 8, vx: dir * (upChak ? 4.8 : 4.4), out: upChak ? 42 : 30, back: false, hit: new Set(), spin: 0 });
+    p.atkCd = upChak ? 10 : 14; sfx.slash();
   }
   if (attackPressed && p.bow && p.atkCd <= 0 && arrowsLeft <= 0){ p.atkCd = 20; sfx.bump(); } // carquois vide
   else if (attackPressed && p.bow && p.atkCd <= 0){
@@ -2732,7 +2738,7 @@ function draw(){
     if (g.life < 120 && Math.floor(tick / 5) % 2) continue;
     drawGem(Math.round(g.x - cx) + 5, Math.round(g.y) + 5, g.seed, g.kind);
   }
-  if (ring) drawChakram(Math.round(ring.x - cx) + 4, Math.round(ring.y) + 4, ring.spin);
+  for (const r of rings) drawChakram(Math.round(r.x - cx) + 4, Math.round(r.y) + 4, r.spin);
   for (const a of arrows){
     const ax = Math.round(a.x - cx), ay = Math.round(a.y), d = a.vx > 0 ? 1 : -1;
     ctx.fillStyle = '#8a5232'; ctx.fillRect(ax, ay, 10, 1);
@@ -2774,7 +2780,7 @@ function draw(){
         ctx.drawImage(BOW, bx, py + 5*s, 6*s, 8*s);
       }
     }
-    if (chak && !ring && !p.dying) drawChakram(px + (p.face === 0 ? 12 : 4) * s, py + 10 * s, tick * 0.08);
+    if (chak && rings.length < (upChak ? 2 : 1) && !p.dying) drawChakram(px + (p.face === 0 ? 12 : 4) * s, py + 10 * s, tick * 0.08);
     if (p.sword && !p.dying){
       if (p.atk > 0){
         const prog = 1 - p.atk / 16;
@@ -2832,7 +2838,7 @@ function hud(){
   if (state === 'title') return;
   const sh = p && p.shield > 0 ? '●'.repeat(p.shield) + '○'.repeat(Math.max(0, shieldMax() - p.shield)) : '—';
   if (sh !== last.sh) hShield.textContent = sh;
-  const wp = p && chak ? t('chakram') : p && p.sword ? t('scimitar') + (upSword ? '+' : '') : p && p.bow ? t('bow') + (upBow ? '+' : '') + ' ' + arrowsLeft : '—';
+  const wp = p && chak ? t('chakram') + (upChak ? '+' : '') : p && p.sword ? t('scimitar') + (upSword ? '+' : '') : p && p.bow ? t('bow') + (upBow ? '+' : '') + ' ' + arrowsLeft : '—';
   const al = p && chak ? t('atkRing') : p && p.bow ? t('atkBow') : t('atk');
   if (al !== last.al) padA.textContent = al;
   if (wp !== last.wp) hWeapon.textContent = wp;
