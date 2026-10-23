@@ -112,6 +112,10 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 .hud-btns .icon-btn{min-height:28px}
 .overlay{overflow:auto}
+.sign{position:absolute;z-index:4;top:16%;left:50%;transform:translateX(-50%);width:max-content;max-width:min(90%,44ch);padding:7px 12px;background:rgba(27,19,32,.9);border:1px solid var(--edge);border-left:3px solid var(--gem);border-radius:6px;pointer-events:none;font-size:14px;line-height:1.35;color:var(--sand);text-align:center}
+.settings{display:grid;gap:6px;width:min(100%,32ch)}
+.settings label{display:grid;grid-template-columns:10ch 1fr;align-items:center;gap:8px;font-size:13px;color:var(--dim);text-align:left}
+.settings input[type=range]{width:100%;accent-color:var(--ember)}
 .play.sim{background:#b0341a;color:#fff3dc;box-shadow:0 4px 0 #5a1010}
 .play.sim:active{box-shadow:0 2px 0 #5a1010}
 .shop{display:grid;gap:5px;width:min(100%,660px);margin-top:0}
@@ -158,12 +162,17 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
     </div>
     <div class="stage">
       <canvas id="game" width="400" height="240" data-i18n-aria="canvas" aria-label="Zone de jeu"></canvas>
+      <div class="sign" id="sign" role="status" aria-live="polite" hidden></div>
       <div class="toast" id="toast" role="status" aria-live="polite" hidden><b id="toastTitle"></b><span id="toastText"></span></div>
       <div class="overlay" id="overlay">
         <div class="card">
           <h2 id="ovTitle">Fennec Run</h2>
           <p id="ovText">Rejoins le portail au bout de chaque désert. Évite les sables mouvants, écrase les scarabées en leur sautant dessus, frappe les jarres par en dessous.</p>
           <div class="shop" id="shop" hidden></div>
+          <div class="settings" id="settings" hidden>
+            <label><span data-i18n="volMusic">Musique</span><input type="range" id="volMusic" min="0" max="100" step="5"></label>
+            <label><span data-i18n="volSfx">Bruitages</span><input type="range" id="volSfx" min="0" max="100" step="5"></label>
+          </div>
           <p class="small" id="ovSmall">Certaines jarres cachent une figue de barbarie : le fennec grandit et encaisse un coup. Le bouclier arrête 3 attaques venues de face, venin compris. Les ennemis vaincus lâchent des gemmes, plus précieuses s'ils sont dangereux. Toutes les 100 gemmes : une vie en plus.</p>
           <p class="small" id="ovTip" hidden></p>
           <div class="btns">
@@ -252,6 +261,16 @@ const STR = {
     scimitar: 'Cimeterre', chakram: 'Chakram', atkRing: 'ANNEAU', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
+    volMusic: 'Musique', volSfx: 'Bruitages',
+    tut: {
+      run: m => m === 'touch' ? 'Boutons ◀ ▶ pour courir.' : m === 'pad' ? 'Stick ou croix pour courir.' : 'Flèches ← → (ou Q / D) pour courir.',
+      jump: m => (m === 'touch' ? 'Bouton SAUT' : m === 'pad' ? 'Bouton A' : 'Espace ou ↑') + ' pour sauter. Maintiens pour sauter plus haut.',
+      stomp: () => 'Un scarabée ! Saute-lui dessus pour l’écraser. Le toucher de côté te coûte un demi-cœur.',
+      jar: () => 'Saute sous une jarre pour la frapper : elle cache une gemme, parfois une figue.',
+      pit: () => 'Les sables mouvants avalent tout. Prends de l’élan et saute par-dessus.',
+      lamp: () => 'Passe devant la lanterne : si tu perds une vie, tu repartiras d’ici.',
+      portal: () => 'Le portail mène au désert suivant. Bonne route !',
+    },
     winTitle: 'Le désert est traversé !', winTitleSim: 'Le Simoun est dompté !',
     winText: s => 'Le dernier scorpion géant est tombé. Score final : ' + s + ' points.',
     simounInfo: 'Mode Simoun débloqué : retour au niveau 1, sans rien en poche, dans des déserts en cendres où les sables mouvants sont devenus de la lave, qui crache des gerbes de feu. Les coups font 1,5 fois plus mal (¾ de cœur pour un coup léger, 1 cœur ½ pour un coup lourd) et les scorpions géants te visent directement. À l’échoppe, tout est déjà découvert.',
@@ -286,6 +305,7 @@ const STR = {
       sword: ['Cimeterre', m => (m ? 'Bouton ÉPÉE' : 'Touche X') + ' pour frapper. Il tue d’un coup, mais ralentit ta course et n’arrête pas le venin.'],
       bow: ['Arc', m => (m ? 'Bouton ARC' : 'Touche X') + ' pour tirer : 12 flèches qui tuent à distance, à recharger à l’échoppe. L’arc remplace l’épée et le bouclier.'],
       chakram: ['Chakram', m => (m ? 'Bouton ANNEAU' : 'Touche X') + ' pour lancer l’anneau : il traverse les ennemis et revient dans ta main. Pas de munitions, mais un seul lancer à la fois.'],
+      pad: ['Manette', () => 'Stick ou croix : courir · A : sauter · X ou B : frapper / tirer · Start : pause.'],
       magpie: ['Pie des sables', () => 'Elle t’a volé ton équipement ! Touche-la avant qu’elle quitte l’écran pour le récupérer.'],
       feather: ['Plume', () => 'Pendant 20 secondes, tu sautes plus haut et tu retombes en planant.'],
       speed: ['Babouches du vent', () => 'Pendant 10 secondes, tu cours 50 % plus vite. Attention à ne pas foncer dans un trou !'],
@@ -335,6 +355,16 @@ const STR = {
     scimitar: 'Scimitar', chakram: 'Chakram', atkRing: 'RING', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
+    volMusic: 'Music', volSfx: 'Sound FX',
+    tut: {
+      run: m => m === 'touch' ? '◀ ▶ buttons to run.' : m === 'pad' ? 'Stick or d-pad to run.' : 'Arrows ← → (or A / D) to run.',
+      jump: m => (m === 'touch' ? 'JUMP button' : m === 'pad' ? 'A button' : 'Space or ↑') + ' to jump. Hold it to jump higher.',
+      stomp: () => 'A beetle! Jump on it to squash it. Touching it from the side costs half a heart.',
+      jar: () => 'Jump under a jar to hit it: it hides a gem, sometimes a prickly pear.',
+      pit: () => 'Quicksand swallows everything. Take a run-up and jump over it.',
+      lamp: () => 'Walk past the lantern: if you lose a life, you will start again from here.',
+      portal: () => 'The portal leads to the next desert. Good luck!',
+    },
     winTitle: 'The desert is crossed!', winTitleSim: 'The Simoom is tamed!',
     winText: s => 'The last giant scorpion has fallen. Final score: ' + s + ' points.',
     simounInfo: 'Simoom mode unlocked: back to level 1, with nothing in your pockets, through deserts of ash where quicksand has turned into lava that spits jets of fire. Hits hurt 1.5 times more (¾ of a heart for a light hit, 1½ hearts for a heavy one) and giant scorpions aim straight at you. At the shop, everything is already discovered.',
@@ -369,6 +399,7 @@ const STR = {
       sword: ['Scimitar', m => (m ? 'SWORD button' : 'Press X') + ' to strike. It kills in one hit, but slows you down and does not stop venom.'],
       bow: ['Bow', m => (m ? 'BOW button' : 'Press X') + ' to shoot: 12 arrows that kill from a distance, refilled at the shop. The bow replaces the sword and the shield.'],
       chakram: ['Chakram', m => (m ? 'RING button' : 'Press X') + ' to throw the ring: it cuts through enemies and comes back to your hand. No ammo, but one throw at a time.'],
+      pad: ['Gamepad', () => 'Stick or d-pad: run · A: jump · X or B: strike / shoot · Start: pause.'],
       magpie: ['Sand magpie', () => 'It stole your gear! Hit it before it leaves the screen to get it back.'],
       feather: ['Feather', () => 'For 20 seconds, you jump higher and glide down slowly.'],
       speed: ['Wind slippers', () => 'For 10 seconds, you run 50% faster. Careful not to rush into a pit!'],
@@ -1179,8 +1210,11 @@ function initAudio(){
 }
 addEventListener('touchend', initAudio, { passive: true });
 addEventListener('pointerdown', initAudio);
+let volMusic = 0.7, volSfx = 1;
+try { const v = JSON.parse(localStorage.getItem('fennec-vol') || 'null'); if (v){ volMusic = v.m; volSfx = v.s; } } catch(e){}
 function beep(f1, f2, dur, type='square', vol=0.05, delay=0){
-  if (muted || !ac) return;
+  if (muted || !ac || volSfx <= 0) return;
+  vol = Math.max(0.0002, vol * volSfx);
   const t0 = ac.currentTime + delay, o = ac.createOscillator(), g = ac.createGain();
   o.type = type; o.frequency.setValueAtTime(f1, t0); o.frequency.exponentialRampToValueAtTime(f2, t0+dur);
   g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
@@ -1283,7 +1317,9 @@ function mStep(tr, st, t){
 function musicTick(){
   // la musique ne joue que pendant la partie, et se tait avec le bouton Son
   if (!ac || muted || state !== 'play' || ac.state !== 'running'){ mus.key = null; return; }
-  if (!musGain){ musGain = ac.createGain(); musGain.gain.value = 0.55; musGain.connect(ac.destination); }
+  if (!musGain){ musGain = ac.createGain(); musGain.connect(ac.destination); }
+  musGain.gain.value = 0.55 * volMusic;
+  if (volMusic <= 0){ mus.key = null; return; }
   const tk = isBossLevel(level) ? 'boss' : themeIdx, tr = TRACKS[tk], key = tk + (simoun ? 's' : '');
   if (key !== mus.key){ mus.key = key; mus.track = tk; mus.next = ac.currentTime + 0.05; mus.step = 0; }
   const sp = 60 / (tr.bpm + (simoun ? -6 : 0) + (level % 20 === 0 ? 10 : 0)) / 4;
@@ -1398,7 +1434,7 @@ function showTitle(){
 }
 function quitToTitle(){
   tipQueue = []; tipKey = null; toastEl.hidden = true;
-  state = 'title'; p = null; shots = []; boss = null; bosses = []; rings = [];
+  state = 'title'; p = null; shots = []; boss = null; bosses = []; rings = []; signs = []; activeSign = null;
   buildLevel(3, Math.floor(Math.random() * 1e9));
   showTitle();
 }
@@ -1406,7 +1442,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   level = n;
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
-  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120;
+  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120; makeSigns();
   if (buyFeather){ p.feather = 1200; buyFeather = false; }
   if (buySpeed){ p.speedT = 600; buySpeed = false; }
   runStart = snapshot(level, keepBig, keepShield, keepSword, keepBow); writeSave(runStart);
@@ -1490,12 +1526,18 @@ function showOverlay(title, text, small, btn, alt){
   ovTip.hidden = !(state === 'title' && typeof showIosTip !== 'undefined' && showIosTip); if (!ovTip.hidden) ovTip.textContent = t('iosTip');
   ovTitle.textContent = title; ovText.textContent = text; ovSmall.textContent = small; playBtn.textContent = btn;
   altBtn.hidden = !alt; if (alt) altBtn.textContent = alt;
+  settingsEl.hidden = true;
   simBtn.hidden = true;
   shopEl.hidden = true;
   overlay.hidden = false; playBtn.focus({preventScroll:true});
 }
+const settingsEl = document.getElementById('settings'), volMusicEl = document.getElementById('volMusic'), volSfxEl = document.getElementById('volSfx');
+function saveVol(){ try { localStorage.setItem('fennec-vol', JSON.stringify({ m: volMusic, s: volSfx })); } catch(e){} }
+volMusicEl.addEventListener('input', () => { volMusic = volMusicEl.value / 100; if (musGain) musGain.gain.value = 0.55 * volMusic; saveVol(); });
+volSfxEl.addEventListener('input', () => { volSfx = volSfxEl.value / 100; saveVol(); });
+volSfxEl.addEventListener('change', () => { initAudio(); sfx.gem(); }); // petit son d'essai
 function togglePause(){
-  if (state === 'play'){ state = 'pause'; ui(() => showOverlay(t('pauseTitle'), t('pauseText'), t('pauseSmall'), t('resume'), t('menu'))); }
+  if (state === 'play'){ state = 'pause'; ui(() => { showOverlay(t('pauseTitle'), t('pauseText'), t('pauseSmall'), t('resume'), t('menu')); volMusicEl.value = Math.round(volMusic * 100); volSfxEl.value = Math.round(volSfx * 100); settingsEl.hidden = false; }); }
   else if (state === 'pause'){ state = 'play'; overlay.hidden = true; }
 }
 function fmtTime(f){ const s = Math.floor(f/60); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
@@ -2642,6 +2684,42 @@ function drawVignette(){
   if (!vignette || vignetteW !== VW){ vignetteW = VW; vignette = ctx.createRadialGradient(VW / 2, VH / 2, VH * 0.42, VW / 2, VH / 2, Math.max(VW, VH) * 0.72); vignette.addColorStop(0, 'rgba(0,0,0,0)'); vignette.addColorStop(1, 'rgba(10,4,12,.32)'); }
   ctx.fillStyle = vignette; ctx.fillRect(0, 0, VW, VH);
 }
+let signs = [], activeSign = null;
+function makeSigns(){
+  signs = []; activeSign = null;
+  if (level !== 1 || simoun) return;
+  const add = (col, key) => {
+    for (let c = col; c >= col - 3; c--){
+      if (c > 2 && c < W - 4 && groundTop[c] != null && map[groundTop[c]][c] === '#' && !signs.some(sg => Math.abs(sg.col - c) < 4)){ signs.push({ col: c, key, top: groundTop[c] }); return; }
+    }
+  };
+  add(4, 'run'); add(9, 'jump');
+  const be = enemies.find(e => e.kind === 'beetle'); if (be) add(Math.floor(be.x / T) - 5, 'stomp');
+  let jc = -1; for (let c = 0; c < W && jc < 0; c++) for (let y = 0; y < H; y++) if ('BP'.includes(map[y][c])){ jc = c; break; }
+  if (jc > 0) add(jc - 1, 'jar');
+  let pc = -1; for (let c = 12; c < W && pc < 0; c++) if (groundTop[c] === null) pc = c;
+  if (pc > 0) add(pc - 2, 'pit');
+  add(Math.floor(checkpoint.x / T) - 2, 'lamp');
+  add(Math.floor(portal.x / T) - 3, 'portal');
+}
+function drawSigns(cx){
+  activeSign = null;
+  for (const sg of signs){
+    const x = sg.col * T - cx, y = sg.top * T;
+    if (x < -20 || x > VW + 20) continue;
+    ctx.fillStyle = '#5e3a26'; ctx.fillRect(x + 7, y - 12, 2, 12);
+    ctx.fillStyle = '#a8724c'; ctx.fillRect(x + 2, y - 21, 12, 10);
+    ctx.fillStyle = '#5e3a26'; ctx.fillRect(x + 2, y - 12, 12, 1);
+    ctx.fillStyle = '#2a160c'; ctx.fillRect(x + 7, y - 19, 2, 4); ctx.fillRect(x + 7, y - 14, 2, 1);
+    if (p && !p.dying && Math.abs((p.x + p.w/2) - (sg.col * T + 8)) < 3 * T) activeSign = sg;
+  }
+}
+const signEl = document.getElementById('sign'); let signShown = '';
+function drawSignBubble(){ // texte du panneau dans une bulle HTML (net à toutes les tailles)
+  const text = activeSign && state === 'play' ? STR[lang].tut[activeSign.key](gpOn ? 'pad' : touchUI() ? 'touch' : 'kb') : '';
+  if (text === signShown) return;
+  signShown = text; signEl.textContent = text; signEl.hidden = !text;
+}
 function drawCheckpoint(){
   const x = Math.round(checkpoint.x - camX), base = checkpoint.top*T;
   if (x < -40 || x > VW + 40) return;
@@ -2687,6 +2765,7 @@ function draw(){
     const c = map[ty][tx]; if (c !== '.' && c !== 'Q') drawTile(c, tx, ty, tx*T - cx, ty*T);
   }
   drawProps(cx, t0, t1);
+  drawSigns(cx);
   for (const e of enemies) if (!e.gone && !e.dead && e.h > 0) drawShadow(cx, e.x + e.w/2, e.y + e.h, e.w);
   for (const b of bosses) if (!b.gone && !b.dead && b.state !== 'sleep') drawShadow(cx, b.x + b.w/2, b.y + b.h, b.w * 0.8);
   if (p && !p.dying && state !== 'title') drawShadow(cx, p.x + p.w/2, p.y + p.h, p.w + 4);
@@ -2848,6 +2927,7 @@ function draw(){
   if (geysers.length) drawGeysers(cx);
   drawVignette();
   drawHearts();
+  drawSignBubble();
 }
 
 /* ---------- HUD ---------- */
@@ -2906,9 +2986,29 @@ applyStatic(); syncMute(); showBest(); fitView();
 buildLevel(3, Math.floor(Math.random() * 1e9)); // décor animé de l'écran d'accueil
 showTitle();
 let acc = 0, prev = performance.now();
+/* ---------- manette (Gamepad API) ---------- */
+let gpPrev = {}, gpOn = false;
+addEventListener('gamepadconnected', () => { gpOn = true; tip('pad'); });
+function pollGamepad(){
+  const list = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null; for (const g of list || []) if (g && g.connected){ gp = g; break; }
+  if (!gp) return;
+  gpOn = true;
+  const btn = i => !!(gp.buttons[i] && gp.buttons[i].pressed), ax = gp.axes[0] || 0, ay = gp.axes[1] || 0;
+  const now = { left: btn(14) || ax < -0.4, right: btn(15) || ax > 0.4, jump: btn(0) || btn(12) || ay < -0.7, attack: btn(2) || btn(1) || btn(5) || btn(7), pause: btn(9), mute: btn(8) };
+  for (const k of ['left', 'right', 'jump', 'attack']){
+    if (now[k] === !!gpPrev[k]) continue;
+    if (inMenu()){ if (k === 'jump' && now.jump){ initAudio(); menuAction(); } }
+    else setKey(k, now[k]);
+  }
+  if (now.pause && !gpPrev.pause){ initAudio(); if (state === 'play' || state === 'pause') togglePause(); else if (inMenu()) menuAction(); }
+  if (now.mute && !gpPrev.mute) toggleMute();
+  gpPrev = now;
+}
 function loop(now){
   requestAnimationFrame(loop);
   acc += Math.min(100, now - prev); prev = now;
+  pollGamepad();
   while (acc >= 1000/60){ if (hitstop > 0) hitstop--; else update(); acc -= 1000/60; } // micro-pause à l'impact
   if (state === 'title'){ camX = (Math.sin(tick*0.003) * 0.5 + 0.5) * (W*T - VW); }
   const shx = shakeT > 0 ? Math.round((Math.random() - 0.5) * shakeA) : 0, shy = shakeT > 0 ? Math.round((Math.random() - 0.5) * shakeA) : 0;
