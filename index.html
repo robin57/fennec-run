@@ -305,6 +305,10 @@ const STR = {
     },
     winTitle: 'Le désert est traversé !', winTitleSim: 'Le Simoun est dompté !',
     winText: s => 'Le djinn des sables est vaincu. Score final : ' + s + ' points.',
+    endCap: ['Le djinn vaincu, le vent tombe enfin sur le désert…', 'Au bout du chemin, l’oasis. Et ceux qui l’attendaient.', 'Victoire !', 'La nuit tombe sur l’oasis.'],
+    endCapSim: 'Le Simoun s’apaise. Les cendres retombent, le ciel s’éclaircit…',
+    endSkip: 'Saut : passer',
+    credits: s => ['FENNEC RUN', '', 'Un jeu imaginé par Robin', 'Code, graphismes et musique créés avec Claude', '', 'Le scorpion géant · le ver des sables', 'le vautour royal · le djinn des sables', '', 'Score : ' + s, '', 'Merci d’avoir joué !'],
     beyondBtn: 'Continuer', beyondInfo: 'Continuer : tu gardes ton score, tes gemmes, tes cœurs et ton équipement, et tu t’enfonces au-delà du Simoun. Chaque désert y est plus long, plus peuplé, et frappe plus fort que le précédent. Personne n’en revient : le but est d’aller le plus loin possible.',
     beyondTitle: 'Au-delà du Simoun', beyondText: l => 'Niveau ' + l + ' : les déserts s’allongent, les ennemis se multiplient et chaque coup fait plus mal. Jusqu’où iras-tu ?',
     hintBeyond: l => 'Niveau ' + l + ' : au-delà du Simoun, un désert encore plus long et plus peuplé. Les coups font ×' + beyondDmg(l).toFixed(1).replace('.', ',') + '.',
@@ -416,6 +420,10 @@ const STR = {
     },
     winTitle: 'The desert is crossed!', winTitleSim: 'The Simoom is tamed!',
     winText: s => 'The sand djinn is defeated. Final score: ' + s + ' points.',
+    endCap: ['The djinn defeated, the wind finally drops over the desert…', 'At the end of the road, the oasis. And those who were waiting.', 'Victory!', 'Night falls over the oasis.'],
+    endCapSim: 'The Simoom calms down. The ashes settle, the sky clears…',
+    endSkip: 'Jump: skip',
+    credits: s => ['FENNEC RUN', '', 'A game imagined by Robin', 'Code, art and music made with Claude', '', 'The giant scorpion · the sandworm', 'the royal vulture · the sand djinn', '', 'Score: ' + s, '', 'Thanks for playing!'],
     beyondBtn: 'Continue', beyondInfo: 'Continue: keep your score, gems, hearts and gear, and push on beyond the Simoom. Every desert there is longer, more crowded and hits harder than the last. Nobody comes back: the goal is to get as far as you can.',
     beyondTitle: 'Beyond the Simoom', beyondText: l => 'Level ' + l + ': deserts grow longer, enemies multiply and every hit hurts more. How far will you go?',
     hintBeyond: l => 'Level ' + l + ': beyond the Simoom, an even longer and more crowded desert. Hits deal ×' + beyondDmg(l).toFixed(1) + '.',
@@ -1453,6 +1461,7 @@ function mStep(tr, st, t){
 }
 function musicTick(){
   // la musique ne joue que pendant la partie, et se tait avec le bouton Son
+  if (state === 'ending' && ac && !muted && ac.state === 'running' && volMusic > 0) return endingMusic();
   if (!ac || muted || state !== 'play' || ac.state !== 'running'){ mus.key = null; return; }
   if (!musGain){ musGain = ac.createGain(); musGain.connect(ac.destination); }
   musGain.gain.value = 0.55 * volMusic;
@@ -1463,6 +1472,25 @@ function musicTick(){
   const sp = 60 / ((tr.bpm + (simoun ? -6 : 0) + (level % 20 === 0 ? 10 : 0)) * (1 + 0.45 * urg + (timeLimit && timeLeft() < 600 ? 0.25 : 0))) / 4;
   if (mus.next < ac.currentTime) mus.next = ac.currentTime + 0.02; // après une pause : on repart sans rattrapage
   while (mus.next < ac.currentTime + 0.25){ mStep(tr, mus.step, mus.next); mus.next += sp; mus.step = (mus.step + 1) % 256; }
+}
+
+// thème de la fin : do majeur, calme et lumineux
+const END_LEAD = [72,null,76,79, 77,null,76,74, 76,null,72,74, 76,79,null,null, 77,null,81,79, 77,76,74,null, 72,74,76,72, 74,null,null,null,
+                  72,null,76,79, 84,null,83,81, 79,null,77,76, 77,81,null,null, 79,77,76,74, 76,79,77,74, 72,null,null,null, null,null,null,null];
+const END_BASS = [48, 53, 55, 48, 53, 48, 55, 48];
+function endingMusic(){
+  if (!musGain){ musGain = ac.createGain(); musGain.connect(ac.destination); }
+  musGain.gain.value = 0.55 * volMusic;
+  if (mus.key !== 'ending'){ mus.key = 'ending'; mus.next = ac.currentTime + 0.1; mus.step = 0; }
+  const sp = 60 / 92 / 2;
+  if (mus.next < ac.currentTime) mus.next = ac.currentTime + 0.02;
+  while (mus.next < ac.currentTime + 0.25){
+    const st = mus.step % 64, n = END_LEAD[st];
+    if (n !== null) mNote(mus.next, midi(n), 0.5, 'triangle', 0.045);
+    if (st % 8 === 0){ const r = END_BASS[st / 8]; mNote(mus.next, midi(r), 1.6, 'sine', 0.07); mNote(mus.next, midi(r + 7), 1.4, 'sine', 0.03); }
+    if (st % 2 === 0) mNote(mus.next, midi(END_BASS[Math.floor(st / 8)] + 24 + [0, 4, 7, 12][(st / 2) % 4]), 0.18, 'square', 0.012);
+    mus.next += sp; mus.step++;
+  }
 }
 
 /* ---------- Input ---------- */
@@ -1481,7 +1509,7 @@ function keyName(e){
   if (k==='x' || k==='k') return 'attack';
   return null;
 }
-const inMenu = () => state==='title' || state==='over' || state==='clear' || state==='victory';
+const inMenu = () => state==='title' || state==='over' || state==='clear' || state==='victory' || state==='ending';
 addEventListener('keydown', e => {
   if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'text'){ if (e.key === 'Enter') e.target.blur(); return; }
   const n = keyName(e);
@@ -1502,6 +1530,7 @@ function bindPad(id, name){
   b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', up);
   b.addEventListener('contextmenu', e => e.preventDefault());
 }
+cv.addEventListener('pointerdown', () => { if (state === 'ending' && endT > 30) finishEnding(); }); // un toucher passe le film de fin
 bindPad('padL','left'); bindPad('padR','right'); bindPad('padJ','jump'); bindPad('padA','attack');
 
 /* ---------- State ---------- */
@@ -1713,6 +1742,7 @@ function startRun(mode = false){
 }
 function menuAction(){
   initAudio();
+  if (state === 'ending'){ if (endT > 30) finishEnding(); return; } // le film de fin se passe d'un saut
   if (subView){ subView = null; showTitle(); return; } // écran Scores / Succès : retour à l'accueil
   if (state === 'title' && readSave()) continueRun();
   else if (state === 'clear') loadLevel(level + 1, p && p.big, p ? p.shield : 0, p && p.sword, p && p.bow);
@@ -1854,7 +1884,13 @@ function winGame(){
   ach('djinn'); if (simoun) ach('simoun'); if (runLost === 0) ach('deathless');
   try { localStorage.setItem('fennec-simoun', '1'); } catch(e){}
   const S0 = score, wasSim = simoun;
-  victorySim = wasSim;
+  victorySim = wasSim; endScore = S0; endT = 0; endFx = []; state = 'ending'; overlay.hidden = true;
+}
+let endT = 0, endFx = [], endScore = 0;
+function finishEnding(){
+  if (state !== 'ending') return;
+  state = 'victory'; endFx = []; jumpPressed = attackPressed = false;
+  const S0 = endScore, wasSim = victorySim;
   ui(() => {
     if (wasSim){ showOverlay(t('winTitleSim'), t('winText', S0), t('beyondInfo') + ' ' + t('relockInfo'), t('beyondBtn'), t('newGame')); simBtn.hidden = false; simBtn.textContent = t('replaySimoun'); }
     else showOverlay(t('winTitle'), t('winText', S0), t('simounInfo') + ' ' + t('relockInfo'), t('playSimoun'), t('newGame'));
@@ -2743,6 +2779,7 @@ function updateTips(){ if (tipKey && --tipT <= 0) nextTip(); }
 function update(){
   tick++;
   updateTips(); // les notifications défilent aussi sur les écrans de menu
+  if (state === 'ending'){ updateEnding(); return; }
   if (state !== 'play') return;
   frames++;
   if (timeLimit && !p.dying){ // contre-la-montre
@@ -2826,6 +2863,119 @@ function drawBackground(){
   ctx.lineTo(VW, VH); ctx.fill();
   if (TH.storm) drawDust(0.35);
   if (TH.embers) drawEmbers();
+}
+/* ---------- film de fin : retour à l'oasis ---------- */
+const END_LEN = 2200;
+const mixC = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - k) + parseInt(b.substr(i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
+const clamp01 = v => Math.max(0, Math.min(1, v));
+const ease = v => { v = clamp01(v); return v * v * (3 - 2 * v); };
+function updateEnding(){
+  endT++;
+  if ((jumpPressed || attackPressed) && endT > 30){ jumpPressed = attackPressed = false; return finishEnding(); }
+  jumpPressed = attackPressed = false;
+  if (endT >= 1000 && endT < 1400 && endT % 38 === 0){ // feu d'artifice de gemmes
+    const x = 60 + Math.random() * (VW - 120), y = 40 + Math.random() * 60, cols = ['#3fd6c6', '#f2c46a', '#e0475e', '#e6f4ff', '#8f7be0'], c = cols[Math.floor(Math.random() * cols.length)];
+    for (let i = 0; i < 22; i++){ const a = i / 22 * Math.PI * 2, v = 1.2 + Math.random() * 0.8; endFx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 60 + Math.random() * 20, c, g: 0.03 }); }
+    sfx.gem();
+  }
+  if (endT === 1000) sfx.power();
+  for (const q of endFx){ q.x += q.vx; q.y += q.vy; q.vy += q.g; q.vx *= 0.98; q.life--; }
+  endFx = endFx.filter(q => q.life > 0);
+  if (endT >= END_LEN) finishEnding();
+}
+function drawFox(set, frame, face, x, footY, s, sq = 1){
+  const img = set[frame][face], dw = 16 * s * (2 - sq), dh = 16 * s * sq;
+  ctx.drawImage(img, Math.round(x - dw / 2), Math.round(footY - dh), Math.round(dw), Math.round(dh));
+}
+function drawEnding(){
+  const e = endT, sim = victorySim;
+  const SKY0 = sim ? ['#1a0606', '#5a1010', '#a02a14'] : ['#2c2150', '#8a4a6a', '#e9875a'], DAWN = ['#6fa8dc', '#f2b6a0', '#ffe0a8'], NIGHT = ['#0b1030', '#1c2350', '#3a3466'];
+  const kDawn = ease(e / 380), kNight = ease((e - 1400) / 320);
+  const sky = DAWN.map((c, i) => mixC(mixC(SKY0[i], c, kDawn), NIGHT[i], kNight));
+  const g = ctx.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, sky[0]); g.addColorStop(0.6, sky[1]); g.addColorStop(1, sky[2]);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  // étoiles, soleil, lune
+  const starA = Math.max(1 - kDawn, kNight);
+  if (starA > 0.02){ ctx.fillStyle = `rgba(255,240,220,${starA * 0.8})`; for (const [sx, sy, sz] of STARS){ const x = sx % VW; if ((sx + Math.floor(tick / 24)) % 19 !== 0) ctx.fillRect(x, sy * 0.8, sz, sz); } }
+  const sunY = 210 - 110 * ease(e / 420) + 160 * kNight;
+  ctx.fillStyle = 'rgba(255,240,192,.28)'; ctx.beginPath(); ctx.arc(VW * 0.72, sunY, 34, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff0c0'; ctx.beginPath(); ctx.arc(VW * 0.72, sunY, 24, 0, Math.PI * 2); ctx.fill();
+  if (kNight > 0){ const mx = VW * 0.2, my = 70 + 120 * (1 - kNight); ctx.globalAlpha = kNight; ctx.fillStyle = '#e8eefc'; ctx.beginPath(); ctx.arc(mx, my, 13, Math.PI * 0.5, Math.PI * 1.5); ctx.arc(mx + 6, my, 11, Math.PI * 1.5, Math.PI * 0.5, true); ctx.fill(); ctx.globalAlpha = 1; } // croissant de lune
+  const shade = c => mixC(c, '#1a1a3a', kNight * 0.6);
+  const sandFar = shade(mixC(sim ? '#5a3a34' : '#b4704c', '#d9a865', kDawn)), sandNear = shade(mixC(sim ? '#6a5e5a' : '#c98a4c', '#f2c682', kDawn));
+  if (e < 440){
+    // 1. la traversée : le fennec court vers l'aube
+    const scroll = e * 1.6;
+    ctx.fillStyle = sandFar; ctx.beginPath(); ctx.moveTo(0, VH);
+    for (let x = 0; x <= VW; x += 4){ const w = x + scroll * 0.4; ctx.lineTo(x, 170 + Math.sin(w * 0.01) * 14 + Math.sin(w * 0.027) * 5); }
+    ctx.lineTo(VW, VH); ctx.fill();
+    ctx.fillStyle = sandNear; ctx.fillRect(0, 200, VW, VH - 200);
+    ctx.fillStyle = shade(mixC(sim ? '#9a8e88' : '#f2c682', '#ffe0a8', kDawn)); for (let x = -(scroll % 24); x < VW; x += 24) ctx.fillRect(Math.round(x), 200, 10, 1);
+    if (sim && kDawn < 1) for (const [ex, ey, sp] of EMBERS){ ctx.fillStyle = `rgba(255,140,60,${0.7 * (1 - kDawn)})`; ctx.fillRect(Math.round((ex - e * sp) % 420 + 420) % 420, Math.round((ey + e * sp * 0.6) % 250), 2, 2); } // les dernières braises retombent
+    const hx = Math.min(VW * 0.42, -20 + e * 1.4);
+    drawFox(FOX, ['run1', 'run2', 'run3', 'run4'][Math.floor(e / 5) % 4], 0, hx, 201, 2);
+    if (tick % 6 === 0) endFx.push({ x: hx - 10, y: 199, vx: -1.2, vy: -0.4, life: 18, c: sandNear, g: 0.02 });
+  } else {
+    // 2 à 4. l'oasis
+    ctx.fillStyle = sandFar; ctx.beginPath(); ctx.moveTo(0, VH);
+    for (let x = 0; x <= VW; x += 4) ctx.lineTo(x, 176 + Math.sin(x * 0.012) * 10 + Math.sin(x * 0.03) * 4);
+    ctx.lineTo(VW, VH); ctx.fill();
+    const palm = shade('#3f5e3a');
+    drawPalm(VW * 0.62, 206, 62, -10, palm); drawPalm(VW * 0.86, 206, 52, 8, palm); drawPalm(VW * 0.74, 208, 40, 4, palm); drawPalm(VW * 0.12, 206, 44, 10, palm);
+    ctx.fillStyle = sandNear; ctx.fillRect(0, 200, VW, VH - 200);
+    const px0 = Math.round(VW * 0.55), pw = Math.round(VW * 0.36); // le bassin
+    ctx.fillStyle = shade('#4aa8d8'); ctx.fillRect(px0, 203, pw, 12); ctx.fillRect(px0 + 6, 215, pw - 12, 4);
+    ctx.fillStyle = shade('#bfe8ff'); for (let i = 0; i < 5; i++){ const wx = px0 + 8 + ((i * 37 + tick * 0.3) % (pw - 20)); ctx.fillRect(Math.round(wx), 205 + (i % 3) * 3, 6, 1); }
+    ctx.fillStyle = shade('#5fae4a'); for (let x = 6; x < VW; x += 13) if (x < px0 - 4 || x > px0 + pw + 2) ctx.fillRect(x, 197 + (x % 3), 2, 3);
+    ctx.fillStyle = shade('#8a6a5a'); ctx.fillRect(Math.round(VW * 0.28), 188, 34, 12); ctx.fillStyle = shade('#b0927c'); ctx.fillRect(Math.round(VW * 0.28) + 2, 186, 30, 3); // le rocher
+    const kids = foxFor('classic'), rockX = VW * 0.28 + 17;
+    // le héros : il arrive, puis monte sur le rocher pour fêter ça
+    let hx, hy = 201, hf = 'idle', hsq = 1;
+    if (e < 680){ hx = Math.min(rockX - 40, -24 + (e - 440) * 1.2); hf = hx < rockX - 40 ? ['run1', 'run2', 'run3', 'run4'][Math.floor(e / 6) % 4] : 'idle'; }
+    else if (e < 980){ hx = rockX - 40 + 40 * ease((e - 900) / 50); if (e >= 900 && e < 950){ hy = 201 - 30 * Math.sin((e - 900) / 50 * Math.PI) - 13 * ease((e - 900) / 50); hf = 'jump'; } else if (e >= 950) hy = 188; }
+    else { hx = rockX; const ph = (e - 980) % 46; hy = 188; if (e < 1420 && ph < 26){ hy = 188 - 26 * Math.sin(ph / 26 * Math.PI); hf = 'jump'; hsq = ph < 4 ? 0.8 : 1.15; } }
+    // les deux petits fennecs sortent de derrière les palmiers
+    for (const [i, off] of [[0, 0], [1, 22]]){
+      if (e < 600) continue;
+      const tx = rockX + 34 + off, kx = Math.max(tx, VW + 10 - (e - 600 - i * 30) * 1.3), moving = kx > tx;
+      const hop = moving || (e > 980 && e < 1420) ? Math.abs(Math.sin((e + i * 9) / 9)) * (moving ? 5 : 9) : 0;
+      drawFox(kids, hop > 1 ? 'jump' : moving ? ['run1', 'run3'][Math.floor(e / 7) % 2] : 'idle', 1, kx, 201 - hop, 1);
+      if (!moving && e > 760 && e < 900 && (e + i * 20) % 50 === 0) endFx.push({ x: kx, y: 182, vx: 0, vy: -0.4, life: 60, heart: true, g: 0 });
+    }
+    drawFox(FOX, hf, 0, hx, hy + 1, 2, hsq);
+  }
+  for (const q of endFx){
+    if (q.heart){ ctx.globalAlpha = clamp01(q.life / 30); ctx.drawImage(HEART_FULL, Math.round(q.x - 4), Math.round(q.y)); ctx.globalAlpha = 1; }
+    else { ctx.fillStyle = q.c; ctx.globalAlpha = clamp01(q.life / 25); ctx.fillRect(Math.round(q.x), Math.round(q.y), 2, 2); ctx.globalAlpha = 1; }
+  }
+  // fondu entre la traversée et l'oasis
+  const fade = e < 440 ? clamp01((e - 400) / 40) : clamp01(1 - (e - 440) / 40);
+  if (fade > 0){ ctx.fillStyle = `rgba(255,248,230,${fade})`; ctx.fillRect(0, 0, VW, VH); }
+  // légendes
+  const caps = STR[lang].endCap, cap = e < 440 ? (sim ? t('endCapSim') : caps[0]) : e < 980 ? caps[1] : e < 1420 ? caps[2] : e < 1700 ? caps[3] : '';
+  const capStart = e < 440 ? 40 : e < 980 ? 500 : e < 1420 ? 990 : 1440, capEnd = e < 440 ? 400 : e < 980 ? 960 : e < 1420 ? 1400 : 1690;
+  const ca = clamp01(Math.min((e - capStart) / 30, (capEnd - e) / 30));
+  if (cap && ca > 0){
+    ctx.globalAlpha = ca; ctx.textAlign = 'center';
+    if (e >= 980 && e < 1420){ ctx.font = '700 28px "Pixelify Sans", monospace'; ctx.fillStyle = '#2a160c'; ctx.fillText(cap, VW / 2 + 2, 62); ctx.fillStyle = '#f5a34a'; ctx.fillText(cap, VW / 2, 60); }
+    else { ctx.font = '600 11px Karla, sans-serif'; const w = ctx.measureText(cap).width + 20; ctx.fillStyle = 'rgba(27,19,32,.75)'; ctx.fillRect(Math.round(VW / 2 - w / 2), VH - 26, Math.round(w), 18); ctx.fillStyle = '#f3dcb8'; ctx.fillText(cap, VW / 2, VH - 13); }
+    ctx.globalAlpha = 1;
+  }
+  // générique
+  if (e > 1640){
+    ctx.fillStyle = `rgba(11,16,48,${0.55 * clamp01((e - 1640) / 60)})`; ctx.fillRect(0, 0, VW, VH);
+    const lines = t('credits', endScore); ctx.textAlign = 'center';
+    lines.forEach((ln, i) => {
+      const y = VH + 14 + i * 17 - (e - 1660) * 0.52;
+      if (!ln || y < -10 || y > VH + 20) return;
+      ctx.globalAlpha = clamp01(Math.min(y / 30, (VH - y + 20) / 30));
+      ctx.font = i === 0 ? '700 20px "Pixelify Sans", monospace' : '600 11px Karla, sans-serif';
+      ctx.fillStyle = i === 0 ? '#f5a34a' : i === lines.length - 1 ? '#3fd6c6' : '#f3dcb8'; ctx.fillText(ln, VW / 2, Math.round(y));
+    });
+    ctx.globalAlpha = 1;
+  }
+  if (e > 60){ ctx.textAlign = 'right'; ctx.font = '600 9px Karla, sans-serif'; ctx.fillStyle = 'rgba(243,220,184,.6)'; ctx.fillText(t('endSkip'), VW - 6, 12); }
+  ctx.textAlign = 'left';
 }
 const EMBERS = Array.from({length:40}, (_, i) => [(i*157) % 420, (i*89) % 250, 0.35 + (i % 5) * 0.15]);
 function drawEmbers(){
@@ -3179,6 +3329,7 @@ function drawPortal(){
   ctx.fillStyle = '#3fd6c6'; ctx.fillRect(x + 14, y - 10, 4, 4);
 }
 function draw(){
+  if (state === 'ending'){ drawEnding(); return; }
   drawBackground();
   if (!map) return;
   const cx = Math.round(camX);
