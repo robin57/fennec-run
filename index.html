@@ -1108,10 +1108,10 @@ function generateBoss(L, seed){
 function makeBoss(L, slot = 0){
   const twin = simoun && L >= 10;
   if (L % 20 === 0 && slot === 0){ // niveau 20 : le djinn des sables
-    const hpMax = twin ? 20 : 26;
+    const hpMax = Math.round((twin ? 20 : 26) * (simoun ? 1.3 : 1)); // Simoun : +30 % de vie
     return { type: 'djinn', x: (arena.x1 - 8) * T, y: 10 * T, w: 26, h: 30, hp: hpMax, maxHp: hpMax, dir: -1, state: 'sleep', t: 0, inv: 0, next: 'orbs', dead: false, deathT: 0, gone: false, L, slot, kind: 'boss' };
   }
-  const base = L % 20 === 0 ? 15 : 15, hpMax = twin ? Math.round(base * 0.75) : base;
+  const base = 15, hpMax = Math.round((twin ? base * 0.75 : base) * (simoun ? 1.3 : 1)); // Simoun : +30 % de vie
   return { type: 'scorpion', x: (arena.x1 - 6 - slot * 9) * T, y: 12 * T - 20, w: 44, h: 20, hp: hpMax, maxHp: hpMax, dir: -1, state: 'sleep', t: slot * 40, inv: 0, next: slot ? 'throw' : 'charge', dead: false, deathT: 0, gone: false, L, slot, kind: 'boss' };
 }
 function setGate(closed){
