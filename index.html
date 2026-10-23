@@ -1138,6 +1138,60 @@ const sfx = {
   win:()=>[523,659,784,659,784,1046].forEach((f,i)=>beep(f,f,0.14,'square',0.05,i*0.12)),
 };
 
+/* ---------- Musique : petite chiptune générée, une piste par décor + une pour les boss ---------- */
+// degrés de gamme ; arp / lead = décalages de degré ; bass / kick = pas (sur 16) où jouer
+const TRACKS = {
+  0: { bpm: 104, root: 57, scale: [0,2,3,5,7,8,10], prog: [0,5,3,4], arp: [0,2,4,2,0,2,4,7], bass: [0,6,8,14], kick: [0,8], seed: 11 },    // crépuscule
+  1: { bpm: 88,  root: 50, scale: [0,1,4,5,7,8,10], prog: [0,0,5,6], arp: [0,4,2,4,0,4,2,6], bass: [0,8,11], kick: [0,10], seed: 23 },      // canyon de nuit
+  2: { bpm: 118, root: 60, scale: [0,2,4,7,9],      prog: [0,3,4,2], arp: [0,1,2,3,4,3,2,1], bass: [0,4,8,12], kick: [0,8], seed: 37 },    // oasis
+  3: { bpm: 136, root: 53, scale: [0,1,4,5,7,8,10], prog: [0,1,0,6], arp: [0,2,4,7,4,2,0,2], bass: [0,3,6,8,11,14], kick: [0,6,8,14], seed: 41 }, // tempête
+  boss: { bpm: 150, root: 45, scale: [0,1,3,5,7,8,11], prog: [0,0,5,4], arp: [0,7,2,7,4,7,2,7], bass: [0,2,4,6,8,10,12,14], kick: [0,4,8,12], seed: 53 },
+};
+for (const k in TRACKS){ // mélodie : quelques notes tenues, toujours les mêmes pour une piste
+  const tr = TRACKS[k], r = mulberry32(tr.seed); tr.lead = [];
+  for (let st = 0; st < 64; st++) tr.lead.push([0, 3, 6, 10, 12].includes(st % 16) && r() < 0.55 ? [0, 2, 4, 1, 3][Math.floor(r() * 5)] : null);
+}
+let mus = { key: null, next: 0, step: 0 }, musGain = null, noiseBuf = null;
+const midi = n => 440 * Math.pow(2, (n - 69) / 12);
+function mNote(t, freq, dur, type, vol){
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(musGain); o.start(t); o.stop(t + dur + 0.05);
+}
+function mDrum(t, kind){
+  if (kind === 'kick'){
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.14);
+    g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(musGain); o.start(t); o.stop(t + 0.2); return;
+  }
+  if (!noiseBuf){ noiseBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.2), ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  const n = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  n.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = 7000;
+  g.gain.setValueAtTime(kind === 'hat' ? 0.05 : 0.025, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+  n.connect(f).connect(g).connect(musGain); n.start(t); n.stop(t + 0.06);
+}
+function mStep(tr, st, t){
+  const len = tr.scale.length, b = st % 16, deg = tr.prog[Math.floor(st / 16) % tr.prog.length], root = tr.root - (simoun ? 2 : 0);
+  const tone = (d, oct) => midi(root + tr.scale[((d % len) + len) % len] + 12 * (oct + Math.floor(d / len)));
+  if (tr.bass.includes(b)) mNote(t, tone(deg, -1), 0.22, 'triangle', 0.09);
+  if (b % 2 === 0) mNote(t, tone(deg + tr.arp[(b / 2) % tr.arp.length], 1), 0.12, simoun ? 'sawtooth' : 'square', simoun ? 0.016 : 0.02);
+  if (tr.lead[st] !== null) mNote(t, tone(deg + tr.lead[st], 2), 0.38, 'sine', 0.03);
+  if (tr.kick.includes(b)) mDrum(t, 'kick');
+  if (b % 4 === 2) mDrum(t, 'hat'); else if (simoun && b % 2 === 1) mDrum(t, 'soft');
+}
+function musicTick(){
+  // la musique ne joue que pendant la partie, et se tait avec le bouton Son
+  if (!ac || muted || state !== 'play' || ac.state !== 'running'){ mus.key = null; return; }
+  if (!musGain){ musGain = ac.createGain(); musGain.gain.value = 0.55; musGain.connect(ac.destination); }
+  const tk = isBossLevel(level) ? 'boss' : themeIdx, tr = TRACKS[tk], key = tk + (simoun ? 's' : '');
+  if (key !== mus.key){ mus.key = key; mus.next = ac.currentTime + 0.05; mus.step = 0; }
+  const sp = 60 / (tr.bpm + (simoun ? 8 : 0) + (level % 20 === 0 ? 10 : 0)) / 4;
+  if (mus.next < ac.currentTime) mus.next = ac.currentTime + 0.02; // après une pause : on repart sans rattrapage
+  while (mus.next < ac.currentTime + 0.25){ mStep(tr, mus.step, mus.next); mus.next += sp; mus.step = (mus.step + 1) % 64; }
+}
+
 /* ---------- Input ---------- */
 const keys = { left:false, right:false, jump:false, attack:false };
 let jumpPressed = false, attackPressed = false;
@@ -2617,7 +2671,7 @@ function loop(now){
   acc += Math.min(100, now - prev); prev = now;
   while (acc >= 1000/60){ update(); acc -= 1000/60; }
   if (state === 'title'){ camX = (Math.sin(tick*0.003) * 0.5 + 0.5) * (W*T - VW); }
-  draw(); hud();
+  draw(); hud(); musicTick();
 }
 requestAnimationFrame(loop);
 })();
