@@ -112,6 +112,9 @@ kbd{font-family:var(--display);font-size:13px;background:var(--panel);border:1px
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 .hud-btns .icon-btn{min-height:28px}
 .overlay{overflow:auto}
+#hTime.urgent{color:#ff6a4a;animation:blink .5s steps(2) infinite}
+@keyframes blink{50%{opacity:.4}}
+@media (prefers-reduced-motion:reduce){#hTime.urgent{animation:none}}
 .sign{position:absolute;z-index:4;top:16%;left:50%;transform:translateX(-50%);width:max-content;max-width:min(90%,44ch);padding:7px 12px;background:rgba(27,19,32,.9);border:1px solid var(--edge);border-left:3px solid var(--gem);border-radius:6px;pointer-events:none;font-size:14px;line-height:1.35;color:var(--sand);text-align:center}
 .settings{display:grid;gap:6px;width:min(100%,32ch)}
 .settings label{display:grid;grid-template-columns:10ch 1fr;align-items:center;gap:8px;font-size:13px;color:var(--dim);text-align:left}
@@ -263,6 +266,9 @@ const STR = {
     scimitar: 'Cimeterre', chakram: 'Chakram', atkRing: 'ANNEAU', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
+    timedTitle: 'Contre-la-montre !', timedText: n => n + ' secondes pour atteindre le portail. Temps écoulé : une vie en moins et retour au début du niveau.',
+    timeUpTitle: 'Temps écoulé !', timeUpText: 'Le désert t’a rattrapé. Retour au début du niveau.',
+    hintTimed: 'Prochain niveau : contre-la-montre ! Atteins le portail avant la fin du compte à rebours. ',
     volMusic: 'Musique', volSfx: 'Bruitages',
     tut: {
       run: m => m === 'touch' ? 'Boutons ◀ ▶ pour courir.' : m === 'pad' ? 'Stick ou croix pour courir.' : 'Flèches ← → (ou Q / D) pour courir.',
@@ -359,6 +365,9 @@ const STR = {
     scimitar: 'Scimitar', chakram: 'Chakram', atkRing: 'RING', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
+    timedTitle: 'Against the clock!', timedText: n => n + ' seconds to reach the portal. Time up: one life lost and back to the start of the level.',
+    timeUpTitle: 'Time up!', timeUpText: 'The desert caught up with you. Back to the start of the level.',
+    hintTimed: 'Next level: against the clock! Reach the portal before the countdown ends. ',
     volMusic: 'Music', volSfx: 'Sound FX',
     tut: {
       run: m => m === 'touch' ? '◀ ▶ buttons to run.' : m === 'pad' ? 'Stick or d-pad to run.' : 'Arrows ← → (or A / D) to run.',
@@ -1118,6 +1127,9 @@ function validate(){
   return true;
 }
 const isBossLevel = L => L % 5 === 0;
+const isTimedLevel = L => L % 5 === 4; // niveaux 4, 9, 14, 19 : contre-la-montre
+let timeLimit = 0, timedOut = false; // en secondes ; 0 = niveau normal
+const timeLeft = () => timeLimit ? Math.max(0, timeLimit * 60 - frames) : 0; // en images
 function bossDiff(L){
   const k = Math.floor(L / 5);
   return { walk: Math.min(0.5 + 0.15 * k, 1.1), charge: Math.min(2.8 + 0.4 * k, 4.4), stun: Math.max(85 - 8 * k, 50), rocks: 3 + (k > 1 ? 1 : 0) };
@@ -1252,6 +1264,7 @@ const sfx = {
   chirp:()=>{beep(1900,2500,0.06,'square',0.03);beep(2100,2700,0.06,'square',0.03,0.09);},
   steal:()=>{beep(900,1600,0.12,'triangle',0.05);beep(1600,700,0.15,'square',0.03,0.1);},
   burn:()=>{beep(200,90,0.4,'sawtooth',0.05);beep(900,300,0.2,'square',0.02,0.05);},
+  tick:hi=>beep(hi ? 1900 : 1400, hi ? 1900 : 1400, 0.05, 'square', 0.045),
   hop:()=>beep(520,980,0.07,'sine',0.03),
   ouch:()=>{beep(620,220,0.14,'square',0.05);},
   heal:()=>[784,988,1318].forEach((f,i)=>beep(f,f,0.07,'triangle',0.05,i*0.06)),
@@ -1334,7 +1347,8 @@ function musicTick(){
   if (volMusic <= 0){ mus.key = null; return; }
   const tk = isBossLevel(level) ? 'boss' : themeIdx, tr = TRACKS[tk], key = tk + (simoun ? 's' : '');
   if (key !== mus.key){ mus.key = key; mus.track = tk; mus.next = ac.currentTime + 0.05; mus.step = 0; }
-  const sp = 60 / (tr.bpm + (simoun ? -6 : 0) + (level % 20 === 0 ? 10 : 0)) / 4;
+  const urg = timeLimit ? 1 - timeLeft() / (timeLimit * 60) : 0; // 0 au départ, 1 à la fin du temps
+  const sp = 60 / ((tr.bpm + (simoun ? -6 : 0) + (level % 20 === 0 ? 10 : 0)) * (1 + 0.45 * urg + (timeLimit && timeLeft() < 600 ? 0.25 : 0))) / 4;
   if (mus.next < ac.currentTime) mus.next = ac.currentTime + 0.02; // après une pause : on repart sans rattrapage
   while (mus.next < ac.currentTime + 0.25){ mStep(tr, mus.step, mus.next); mus.next += sp; mus.step = (mus.step + 1) % 256; }
 }
@@ -1446,7 +1460,7 @@ function showTitle(){
 }
 function quitToTitle(){
   tipQueue = []; tipKey = null; toastEl.hidden = true;
-  state = 'title'; p = null; shots = []; boss = null; bosses = []; rings = []; signs = []; activeSign = null;
+  state = 'title'; p = null; shots = []; boss = null; bosses = []; rings = []; signs = []; activeSign = null; timeLimit = 0;
   buildLevel(3, Math.floor(Math.random() * 1e9));
   showTitle();
 }
@@ -1455,6 +1469,8 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
   spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; rings = []; geysers = []; geyserTimer = 120; makeSigns();
+  timeLimit = isTimedLevel(level) ? Math.ceil(W * T / (MAXV * 60) * 2.3) + (level <= 4 ? 10 : 0) : 0; timedOut = false;
+  if (timeLimit) announce(t('timedTitle'), t('timedText', timeLimit));
   if (buyFeather){ p.feather = 1200; buyFeather = false; }
   if (buySpeed){ p.speedT = 600; buySpeed = false; }
   runStart = snapshot(level, keepBig, keepShield, keepSword, keepBow); writeSave(runStart);
@@ -1573,13 +1589,18 @@ function saveBest(){
 function loseLife(){
   lives--;
   if (lives <= 0){
-    state = 'over'; const wasBest = score > best; saveBest(); clearSave();
+    timedOut = false; state = 'over'; const wasBest = score > best; saveBest(); clearSave();
     const L0 = level, S0 = score, G0 = gems;
     ui(() => {
       const rec = wasBest ? t('newRecord') : t('record', best, bestLevel);
       if (simounUnlocked()) showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec + ' ' + t('relockInfo'), t('restartSimoun'), t('newGame'));
       else showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec, t('newGame'));
     });
+  } else if (timedOut){ // contre-la-montre perdu : on recommence le niveau tel qu'il était au départ
+    timedOut = false; hp = maxHp; const rs = runStart || {};
+    chak = !!rs.chakram; if (rs.arrows != null) arrowsLeft = rs.arrows;
+    loadLevel(level, rs.big, rs.shield || 0, rs.sword, rs.bow);
+    announce(t('timeUpTitle'), t('timeUpText'));
   } else {
     hp = maxHp; chak = false; rings = []; spawnPlayer(false); resetBossFight();
     if (runStart){ runStart.hp = hp; runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; runStart.chakram = false; writeSave(runStart); }
@@ -1596,14 +1617,14 @@ function winLevel(){
   if (level % 20 === 0){ score += 300 * level; return winGame(); }
   state = 'clear';
   const secs = Math.floor(frames/60), par = Math.round(W / 5);
-  const bonus = 300 * level + Math.max(0, par - secs) * 20;
+  const bonus = 300 * level + Math.max(0, par - secs) * 20 + (timeLimit ? Math.floor(timeLeft() / 60) * 50 : 0); // contre-la-montre : 50 points par seconde restante
   score += bonus; saveBest(); sfx.win();
   runStart = snapshot(level + 1, p.big, p.shield, p.sword, p.bow); writeSave(runStart);
   const L0 = level, B0 = bonus, S0 = score, T0 = fmtTime(frames), N = level + 1;
   ui(() => {
     const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang][simoun ? 'simThemes' : 'themes'][themeFor(N)]) : '';
     const hint = isBossLevel(N) ? (N % 20 === 0 ? t('hintDjinn') : N % 20 === 10 ? t('hintWorm') : N % 20 === 15 ? t('hintRoyal') : t('hintBoss', N)) + (simoun && N >= 10 ? t('hintDjinnSim') : '') : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
-    showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + hint, t('next', N));
+    showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + (isTimedLevel(N) ? t('hintTimed') : '') + hint, t('next', N));
     renderShop();
   });
 }
@@ -2416,8 +2437,9 @@ function tip(key){
   tipQueue.push(key);
   if (!tipKey) nextTip();
 }
+function announce(title, text){ tipKey = '_announce'; toastTitle.textContent = title; toastText.textContent = text; toastEl.hidden = false; tipT = 300; toastEl.style.animation = 'none'; void toastEl.offsetWidth; toastEl.style.animation = ''; }
 function renderTip(){
-  if (!tipKey) return;
+  if (!tipKey || !STR[lang].tips[tipKey]) return;
   const [title, text] = STR[lang].tips[tipKey];
   toastTitle.textContent = title; toastText.textContent = text(touchUI());
 }
@@ -2433,6 +2455,11 @@ function update(){
   if (state !== 'play') return;
   frames++;
   updateTips();
+  if (timeLimit && !p.dying){ // contre-la-montre
+    const left = timeLeft();
+    if (left <= 0){ timedOut = true; burst(p.x + p.w/2, p.y, '#ff6a4a', 14); shake(5); killPlayer(false); }
+    else if (left <= 600 && left % 60 === 0) sfx.tick(left <= 180);
+  }
   updatePlayer();
   updateCrumble();
   updateEnemies();
@@ -3046,12 +3073,12 @@ function hud(){
   if (wp !== last.wp) hWeapon.textContent = wp;
   const pw = p ? [p.feather > 0 ? t('feather') + ' ' + Math.ceil(p.feather / 60) + ' s' : '', p.speedT > 0 ? t('speed') + ' ' + Math.ceil(p.speedT / 60) + ' s' : ''].filter(Boolean).join(' · ') || '—' : '—';
   if (pw !== last.pw) hPower.textContent = pw;
-  const v = { sh, wp, al, pw, lv: String(level) + (simoun ? ' · ' + t('simLabel') : ''), s: String(score), g: String(gems), l: String(Math.max(lives, 0)), t: fmtTime(frames) };
+  const v = { sh, wp, al, pw, lv: String(level) + (simoun ? ' · ' + t('simLabel') : ''), s: String(score), g: String(gems), l: String(Math.max(lives, 0)), t: timeLimit ? fmtTime(timeLeft()) : fmtTime(frames) };
   if (v.lv !== last.lv) hLevel.textContent = v.lv;
   if (v.s !== last.s) hScore.textContent = v.s;
   if (v.g !== last.g) hGems.textContent = v.g;
   if (v.l !== last.l) hLives.textContent = v.l;
-  if (v.t !== last.t) hTime.textContent = v.t;
+  if (v.t !== last.t){ hTime.textContent = v.t; hTime.classList.toggle('urgent', !!timeLimit && timeLeft() < 900); }
   last = v;
 }
 
