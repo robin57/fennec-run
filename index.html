@@ -251,7 +251,7 @@ const STR = {
     tipNew: 'Nouveau',
     winTitle: 'Le désert est traversé !', winTitleSim: 'Le Simoun est dompté !',
     winText: s => 'Le dernier scorpion géant est tombé. Score final : ' + s + ' points.',
-    simounInfo: 'Mode Simoun débloqué : retour au niveau 1, sans rien en poche, dans des déserts en cendres. Les coups font 1,5 fois plus mal (¾ de cœur pour un coup léger, 1 cœur ½ pour un coup lourd) et les scorpions géants te visent directement. À l’échoppe, tout est déjà découvert.',
+    simounInfo: 'Mode Simoun débloqué : retour au niveau 1, sans rien en poche, dans des déserts en cendres où les sables mouvants sont devenus de la lave, qui crache des gerbes de feu. Les coups font 1,5 fois plus mal (¾ de cœur pour un coup léger, 1 cœur ½ pour un coup lourd) et les scorpions géants te visent directement. À l’échoppe, tout est déjà découvert.',
     playSimoun: 'Mode Simoun', replaySimoun: 'Rejouer en Simoun', restartSimoun: 'Recommencer en Simoun',
     relockInfo: 'Attention : une nouvelle partie normale fait perdre l’accès au Simoun, il faudra de nouveau franchir le niveau 20.', simLabel: 'Simoun',
     simThemes: ['Désert de cendres', 'Canyon en flammes', 'Oasis morte', 'Tempête de braises'],
@@ -330,7 +330,7 @@ const STR = {
     tipNew: 'New',
     winTitle: 'The desert is crossed!', winTitleSim: 'The Simoom is tamed!',
     winText: s => 'The last giant scorpion has fallen. Final score: ' + s + ' points.',
-    simounInfo: 'Simoom mode unlocked: back to level 1, with nothing in your pockets, through deserts of ash. Hits hurt 1.5 times more (¾ of a heart for a light hit, 1½ hearts for a heavy one) and giant scorpions aim straight at you. At the shop, everything is already discovered.',
+    simounInfo: 'Simoom mode unlocked: back to level 1, with nothing in your pockets, through deserts of ash where quicksand has turned into lava that spits jets of fire. Hits hurt 1.5 times more (¾ of a heart for a light hit, 1½ hearts for a heavy one) and giant scorpions aim straight at you. At the shop, everything is already discovered.',
     playSimoun: 'Simoom mode', replaySimoun: 'Play Simoom again', restartSimoun: 'Restart in Simoom',
     relockInfo: 'Careful: a new normal game removes access to Simoom, you will have to clear level 20 again.', simLabel: 'Simoom',
     simThemes: ['Desert of ash', 'Burning canyon', 'Dead oasis', 'Ember storm'],
@@ -1116,6 +1116,7 @@ const sfx = {
   creak:()=>beep(180,150,0.06,'square',0.03),
   chirp:()=>{beep(1900,2500,0.06,'square',0.03);beep(2100,2700,0.06,'square',0.03,0.09);},
   steal:()=>{beep(900,1600,0.12,'triangle',0.05);beep(1600,700,0.15,'square',0.03,0.1);},
+  burn:()=>{beep(200,90,0.4,'sawtooth',0.05);beep(900,300,0.2,'square',0.02,0.05);},
   hop:()=>beep(520,980,0.07,'sine',0.03),
   ouch:()=>{beep(620,220,0.14,'square',0.05);},
   heal:()=>[784,988,1318].forEach((f,i)=>beep(f,f,0.07,'triangle',0.05,i*0.06)),
@@ -1252,7 +1253,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   level = n;
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
-  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; ring = null;
+  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; ring = null; geysers = []; geyserTimer = 120;
   if (buyFeather){ p.feather = 1200; buyFeather = false; }
   if (buySpeed){ p.speedT = 600; buySpeed = false; }
   runStart = snapshot(level, keepBig, keepShield, keepSword, keepBow); writeSave(runStart);
@@ -1956,7 +1957,8 @@ function updatePlayer(){
   if (p.feather > 0){ if (--p.feather === 0) sfx.shrink(); else if (!p.onGround && tick % 6 === 0) burst(p.x + p.w/2, p.y + p.h, '#f4f8ff', 1); }
   if (p.speedT > 0){ if (--p.speedT === 0) sfx.shrink(); else if (p.onGround && Math.abs(p.vx) > 2 && tick % 3 === 0) burst(p.x + (p.vx > 0 ? 0 : p.w), p.y + p.h, '#f5a34a', 1); }
   if (p.pendingGrow) tryGrow();
-  if (inQuicksand(p) || p.y > H*T + 24) killPlayer(true);
+  if (simoun && inQuicksand(p)){ burst(p.x + p.w/2, p.y + p.h, '#ff7a1a', 14); burst(p.x + p.w/2, p.y + p.h, '#ffd04a', 8); sfx.burn(); killPlayer(false); p.vy = -7.5; } // lave : pas d'enfoncement lent
+  else if (inQuicksand(p) || p.y > H*T + 24) killPlayer(true);
 
   if (!checkpoint.lit && p.x > checkpoint.x){ checkpoint.lit = true; sfx.lamp(); burst(checkpoint.x+8, checkpoint.top*T-34, '#ffd27a', 12); heal(2); }
   if (portal.active !== false && overlap(p, portal, 6)) winLevel();
@@ -2066,6 +2068,7 @@ function update(){
   updateGems();
   updateItems();
   updateShots();
+  if (simoun) updateGeysers();
   updateDrops();
   updateBoss();
   for (const k of pickups){
@@ -2176,6 +2179,7 @@ function drawTile(c, tx, ty, x, y){
     const bub = (tick + tx * 37) % 90;
     if (bub < 20){ ctx.fillStyle = '#c4905e'; ctx.fillRect(x + (tx*7) % 12 + 2, y - (bub < 10 ? 1 : 0), 2, 2); }
   } else if (c === 'Q'){
+    if (simoun) return drawLava(tx, ty, x, y); // Simoun : lave
     // quicksand: rippling surface on the top row
     ctx.fillStyle = '#a86f3c'; ctx.fillRect(x, y, T, T);
     ctx.fillStyle = '#8a5a30';
@@ -2214,6 +2218,56 @@ function drawTile(c, tx, ty, x, y){
     }
   } else if (c === 'o'){
     drawGem(x + 8, y + 8 + Math.round(Math.sin(tick*0.08 + tx)*1.5), tx);
+  }
+}
+function drawLava(tx, ty, x, y){
+  const top = tileAt(tx, ty-1) !== 'Q';
+  ctx.fillStyle = top ? '#e0481a' : '#b8300c'; ctx.fillRect(x, y, T, T);
+  ctx.fillStyle = '#ff7a1a';
+  for (let i = 0; i < 3; i++){ const ox = (tx*11 + i*6 + Math.floor(tick*0.3)) % 16; ctx.fillRect(x + ox, y + 6 + i*4, 4, 1); }
+  ctx.fillStyle = '#7a1a08'; ctx.fillRect(x + (tx*7 + 3) % 12, y + 11, 3, 2);
+  if (!top) return;
+  ctx.fillStyle = 'rgba(255,140,40,.35)'; ctx.fillRect(x, y - 6, T, 6); // lueur au-dessus de la lave
+  for (let i = 0; i < T; i++){
+    const wv = Math.round(Math.sin((tx*T + i)*0.4 + tick*0.08) * 1.5);
+    ctx.fillStyle = '#ffd04a'; ctx.fillRect(x + i, y + 1 + wv, 1, 2);
+  }
+  const bub = (tick + tx * 29) % 70;
+  if (bub < 18){ ctx.fillStyle = '#ffb02a'; ctx.beginPath(); ctx.arc(x + 4 + (tx*5) % 8, y + 2 - bub * 0.15, 1.5 + (bub % 6) / 3, 0, Math.PI * 2); ctx.fill(); }
+}
+/* ---------- gerbes de feu qui jaillissent de la lave (Simoun) ---------- */
+let geysers = [], geyserTimer = 120;
+function updateGeysers(){
+  if (!isBossLevel(level) && !p.dying && --geyserTimer <= 0){
+    const pc = Math.floor((p.x + p.w/2) / T), cand = [];
+    for (let c = pc - 10; c <= pc + 12; c++) if (c > 0 && c < W && groundTop[c] === null && map[QS_ROW][c] === 'Q' && !geysers.some(g => g.c === c)) cand.push(c);
+    if (cand.length){ geysers.push({ c: cand[Math.floor(Math.random() * cand.length)], st: 'warn', t: 45, h: 0, gone: false }); sfx.bubble(); }
+    geyserTimer = Math.max(70, 200 - 6 * level) + Math.floor(Math.random() * 80);
+  }
+  for (const g of geysers){
+    if (g.st === 'warn'){ if (--g.t <= 0){ g.st = 'burst'; g.t = 55; sfx.burn(); } continue; } // 45 images d'avertissement : la lave bouillonne
+    g.t--; g.h = g.t > 45 ? (55 - g.t) * 7.2 : g.t < 10 ? g.t * 7.2 : 72;
+    const box = { x: g.c * T + 2, y: QS_ROW * T - g.h, w: T - 4, h: g.h };
+    if (!p.dying && g.h > 4 && p.inv <= 0 && overlap(p, box)){ hurt(4); p.vy = -6.5; }
+    if (g.t <= 0) g.gone = true;
+  }
+  geysers = geysers.filter(g => !g.gone);
+}
+function drawGeysers(cx){
+  for (const g of geysers){
+    const x = g.c * T - cx, base = QS_ROW * T;
+    if (x < -T || x > VW + T) continue;
+    if (g.st === 'warn'){
+      ctx.fillStyle = `rgba(255,200,80,${0.3 + 0.3 * Math.sin(tick * 0.5)})`; ctx.fillRect(x, base - 3, T, 4);
+      ctx.fillStyle = '#ffd04a'; for (let i = 0; i < 3; i++){ const ph = (tick * 0.3 + i * 2) % 6; ctx.fillRect(x + 3 + i * 4, base - ph, 2, 2); }
+      continue;
+    }
+    for (let y = 0; y < g.h; y += 4){
+      const k = y / 72, wob = Math.round(Math.sin(tick * 0.6 + y * 0.3) * 2), w = Math.max(4, Math.round((T - 2) * (1 - k * 0.5)));
+      ctx.fillStyle = k > 0.75 ? '#ffd04a' : k > 0.4 ? '#ff9a2a' : '#ff5a1a';
+      ctx.fillRect(x + (T - w) / 2 + wob, base - y - 4, w, 4);
+    }
+    ctx.fillStyle = '#fff3c4'; ctx.fillRect(x + T/2 - 1, base - g.h, 2, Math.min(g.h, 10));
   }
 }
 function drawPlank(x, y, late){
@@ -2499,6 +2553,7 @@ function draw(){
   for (let ty=QS_ROW; ty<H; ty++) for (let tx=t0; tx<=t1; tx++){
     if (map[ty][tx] === 'Q') drawTile('Q', tx, ty, tx*T - cx, ty*T);
   }
+  if (geysers.length) drawGeysers(cx);
 }
 
 /* ---------- HUD ---------- */
