@@ -283,6 +283,7 @@ const STR = {
     scimitar: 'Cimeterre', chakram: 'Chakram', atkRing: 'ANNEAU', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
+    hintWater: 'Nouveau : des bassins d’eau. On y nage lentement, sans danger, mais méfie-toi des poissons qui bondissent. ',
     achUnlocked: 'Succès débloqué !', achTitle: 'Succès', achCount: (n, tot) => n + ' sur ' + tot + ' débloqués', achBtn: (n, tot) => 'Succès ' + n + '/' + tot,
     scoresTitle: 'Meilleurs scores', scoresBtn: 'Scores', noScores: 'Aucune partie terminée pour l’instant.', back: 'Retour',
     nameLabel: r => 'Ton nom pour le classement (n° ' + r + ') :', lvlShort: l => 'niv. ' + l,
@@ -334,6 +335,7 @@ const STR = {
       bow: ['Arc', m => (m ? 'Bouton ARC' : 'Touche X') + ' pour tirer : 12 flèches qui tuent à distance, à recharger à l’échoppe. L’arc remplace l’épée et le bouclier.'],
       chakram: ['Chakram', m => (m ? 'Bouton ANNEAU' : 'Touche X') + ' pour lancer l’anneau : il traverse les ennemis et revient dans ta main. Pas de munitions, mais un seul lancer à la fois.'],
       pad: ['Manette', () => 'Stick ou croix : courir · A : sauter · X ou B : frapper / tirer · Start : pause.'],
+      water: ['Eau', () => 'Tu nages : chaque saut est une brasse vers le haut. La tête hors de l’eau, saute pour sortir. Au fond, des gemmes valent triple.'],
       magpie: ['Pie des sables', () => 'Elle t’a volé ton équipement ! Touche-la avant qu’elle quitte l’écran pour le récupérer.'],
       feather: ['Plume', () => 'Pendant 20 secondes, tu sautes plus haut et tu retombes en planant.'],
       speed: ['Babouches du vent', () => 'Pendant 10 secondes, tu cours 50 % plus vite. Attention à ne pas foncer dans un trou !'],
@@ -385,6 +387,7 @@ const STR = {
     scimitar: 'Scimitar', chakram: 'Chakram', atkRing: 'RING', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
+    hintWater: 'New: water pools. You swim slowly and safely, but watch out for leaping fish. ',
     achUnlocked: 'Achievement unlocked!', achTitle: 'Achievements', achCount: (n, tot) => n + ' of ' + tot + ' unlocked', achBtn: (n, tot) => 'Achievements ' + n + '/' + tot,
     scoresTitle: 'High scores', scoresBtn: 'Scores', noScores: 'No finished run yet.', back: 'Back',
     nameLabel: r => 'Your name for the leaderboard (#' + r + '):', lvlShort: l => 'lvl ' + l,
@@ -436,6 +439,7 @@ const STR = {
       bow: ['Bow', m => (m ? 'BOW button' : 'Press X') + ' to shoot: 12 arrows that kill from a distance, refilled at the shop. The bow replaces the sword and the shield.'],
       chakram: ['Chakram', m => (m ? 'RING button' : 'Press X') + ' to throw the ring: it cuts through enemies and comes back to your hand. No ammo, but one throw at a time.'],
       pad: ['Gamepad', () => 'Stick or d-pad: run · A: jump · X or B: strike / shoot · Start: pause.'],
+      water: ['Water', () => 'You are swimming: each jump is a stroke upwards. With your head above water, jump to get out. Gems at the bottom are worth triple.'],
       magpie: ['Sand magpie', () => 'It stole your gear! Hit it before it leaves the screen to get it back.'],
       feather: ['Feather', () => 'For 20 seconds, you jump higher and glide down slowly.'],
       speed: ['Wind slippers', () => 'For 10 seconds, you run 50% faster. Careful not to rush into a pit!'],
@@ -741,6 +745,17 @@ const HEART_ROWS = [
 ];
 const HEART_FULL = sprite(HEART_ROWS, { k:'#2a160c', r:'#e0475e', h:'#ffd0da' });
 const HEART_EMPTY = sprite(HEART_ROWS, { k:'#2a160c', r:'#4a3346', h:'#5e4458' });
+const FISH_IMG = sprite([
+  "........bb..",
+  "t....bbbbbb.",
+  "tt.bbbbbbwkb",
+  "tttbbblbbbbb",
+  "tt.bbbbbbbb.",
+  "t....bbbbb..",
+  "......ff....",
+  "............",
+], { b:'#3fa8c8', l:'#bfe8ff', w:'#ffffff', k:'#11202a', t:'#2a7a98', f:'#2a7a98' });
+const FISH = [FISH_IMG, flipped(FISH_IMG)];
 const MAGPIE_PAL = { k:'#1a1420', w:'#f4f0ff', b:'#3a5a9a', e:'#e6e9ef', y:'#5a5a62' };
 const MAGPIE_UP = sprite([
   "....kk..........",
@@ -769,7 +784,7 @@ const GEM_TYPES = {
   ruby:    { val: 5,  pts: 50,  c: ['#8e1d3a', '#e0475e', '#ffd0da'] },
   diamond: { val: 25, pts: 250, c: ['#6f82a6', '#e6f0ff', '#ffffff'] },
 };
-const gemFor = e => e.kind === 'boss' ? 'diamond' : (e.kind === 'vulture' || e.kind === 'worm' || e.kind === 'jackal' || e.kind === 'bscorp' || e.kind === 'golem') ? 'ruby' : (e.kind === 'cobra' || e.kind === 'jerboa' || e.kind === 'magpie' || e.fast) ? 'topaz' : 'turq';
+const gemFor = e => e.kind === 'boss' ? 'diamond' : (e.kind === 'vulture' || e.kind === 'worm' || e.kind === 'jackal' || e.kind === 'bscorp' || e.kind === 'golem') ? 'ruby' : (e.kind === 'cobra' || e.kind === 'jerboa' || e.kind === 'magpie' || e.kind === 'fish' || e.fast) ? 'topaz' : 'turq';
 const SWORD = sprite([
   "...........ss.",
   ".........sssd.",
@@ -868,6 +883,7 @@ function difficulty(L){
 const reduceMotion = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } })();
 let hitstop = 0; const freeze = n => { hitstop = Math.max(hitstop, n); };
 let shakeT = 0, shakeA = 0; const shake = a => { if (reduceMotion) return; shakeA = Math.max(shakeA, a); shakeT = 12; };
+let waterGems = new Set(); // gemmes au fond des bassins ("x,y")
 let drops = [], dropsLeft = 1, boss = null, bosses = [], arena = null, gemDrops = [], arrows = [], wormTimer = 120, crumble = {};
 let W, map, groundTop, rockBase, enemies, portal, checkpoint, bumps, items = [], pickups = [], shots = [];
 /* ---------- passages dessinés à la main, glissés entre les parties générées ----------
@@ -912,6 +928,7 @@ const CHUNKS = [
 ];
 function generate(L, seed){
   const rnd = mulberry32(seed);
+  waterGems = new Set();
   const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const chance = p => rnd() < p;
   const D = difficulty(L);
@@ -958,7 +975,8 @@ function generate(L, seed){
         let nh = chance(0.5) ? h : clampH(h - ri(-Math.min(2, D.stepMax), Math.min(1, D.stepMax - 1)));
         while (w > 1 && !canCross(w, h - nh)) w--;
         if (!canCross(w, h - nh)){ nh = h; w = 1; }
-        for (let i = 0; i < w; i++) col(null);
+        const pool = !simoun && themeFor(L) === 2 && chance(0.6); // oasis : bassin d'eau au lieu de sables mouvants
+        for (let i = 0; i < w; i++) pool ? col('pool', Math.max(h, nh)) : col(null);
         h = nh;
       }
       if (chance(0.5)) gemCols.push([pre, top.length - 1, 'arc']);
@@ -1011,6 +1029,7 @@ function generate(L, seed){
   for (let c = 0; c < W; c++){
     const t = top[c];
     if (t === null){ map[QS_ROW][c] = 'Q'; map[QS_ROW + 1][c] = 'Q'; continue; }
+    if (t === 'pool'){ for (let y = rock[c] + 1; y < H - 1; y++) map[y][c] = 'W'; map[H - 1][c] = '#'; if (chance(0.5)) waterGems.add(c + ',' + (H - 2)); continue; } // eau, fond de sable
     if (t === 'island'){ map[rock[c]][c] = 'I'; groundTop[c] = rock[c]; map[QS_ROW][c] = 'Q'; map[QS_ROW + 1][c] = 'Q'; continue; }
     groundTop[c] = t;
     const base = rock[c] ?? t;
@@ -1127,6 +1146,13 @@ function generate(L, seed){
     else if (kind === 'jerboa') enemies.push({ kind, x: c * T + 2, y: row * T - 12, w: 12, h: 12, vx: 0, vy: 0, dir: chance(0.5) ? -1 : 1, dead: false, t: 0, gone: false, fast: false, onGround: false, wait: 20 + ri(0, 30) });
     else enemies.push({ kind, x: c * T - 2, y: row * T - 24, w: 20, h: 24, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, onGround: false, st: 'walk', cd: 80, hp: simoun ? 3 : 2, inv: 0, fire: simoun });
   }
+  for (let c = 1; c < W; c++){ // poissons sauteurs dans les bassins assez larges
+    if (map[H - 2][c] !== 'W' || map[H - 2][c - 1] === 'W') continue;
+    let e2 = c; while (e2 + 1 < W && map[H - 2][e2 + 1] === 'W') e2++;
+    let surf = H - 2; while (map[surf - 1][c] === 'W') surf--;
+    if (e2 - c + 1 >= 3 && H - 1 - surf >= 2 && c > 14 && chance(0.6)) enemies.push({ kind: 'fish', x: c * T + 4, y: (surf + 1) * T, w: 12, h: 8, vx: 0, vy: 0, dir: 1, dead: false, t: 60 + Math.floor(rnd() * 60), gone: false, fast: false, st: 'swim', minX: c * T, maxX: (e2 + 1) * T - 12, swimY: (surf + 1) * T, surfY: surf * T });
+    c = e2;
+  }
   if (L >= 3 && vultureSpots.length === 0 && flatSpots.length > 3) vultureSpots.push(flatSpots[Math.floor(flatSpots.length / 2)]);
   for (const [c] of vultureSpots){
     if (c <= 18) continue;
@@ -1172,6 +1198,7 @@ function generateBoss(L, seed){
   const x0 = approach;
   for (const c0 of [x0 + 5, x0 + 18]) for (let c = c0; c < c0 + 3; c++) map[G - 4][c] = '=';
   arena = { x0, x1: W - 2, gateCol: x0 - 1, closed: false };
+  waterGems = new Set();
   enemies = []; items = []; bumps = {}; pickups = []; shots = []; drops = []; dropsLeft = 1; gemDrops = []; arrows = []; crumble = {};
   checkpoint = { x: (x0 - 6) * T, top: G, lit: false };
   portal = { x: (W - 6) * T, y: G * T - 48, w: 32, h: 48, active: false };
@@ -1288,6 +1315,8 @@ const sfx = {
   steal:()=>{beep(900,1600,0.12,'triangle',0.05);beep(1600,700,0.15,'square',0.03,0.1);},
   burn:()=>{beep(200,90,0.4,'sawtooth',0.05);beep(900,300,0.2,'square',0.02,0.05);},
   tick:hi=>beep(hi ? 1900 : 1400, hi ? 1900 : 1400, 0.05, 'square', 0.045),
+  splash:()=>{beep(700,180,0.18,'triangle',0.05);},
+  stroke:()=>beep(380,640,0.07,'sine',0.035),
   hop:()=>beep(520,980,0.07,'sine',0.03),
   ouch:()=>{beep(620,220,0.14,'square',0.05);},
   heal:()=>[784,988,1318].forEach((f,i)=>beep(f,f,0.07,'triangle',0.05,i*0.06)),
@@ -1747,7 +1776,7 @@ function winLevel(){
   runStart = snapshot(level + 1, p.big, p.shield, p.sword, p.bow); writeSave(runStart);
   const L0 = level, B0 = bonus, S0 = score, T0 = fmtTime(frames), N = level + 1;
   ui(() => {
-    const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang][simoun ? 'simThemes' : 'themes'][themeFor(N)]) : '';
+    const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang][simoun ? 'simThemes' : 'themes'][themeFor(N)]) + (themeFor(N) === 2 && !simoun ? t('hintWater') : '') : '';
     const hint = isBossLevel(N) ? (N % 20 === 0 ? t('hintDjinn') : N % 20 === 10 ? t('hintWorm') : N % 20 === 15 ? t('hintRoyal') : t('hintBoss', N)) + (simoun && N >= 10 ? t('hintDjinnSim') : '') : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
     showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + (isTimedLevel(N) ? t('hintTimed') : '') + hint, t('next', N));
     renderShop();
@@ -1794,7 +1823,7 @@ function useShield(){
   if (p.shield === 0){ sfx.shieldBreak(); burst(p.x + p.w/2, p.y + p.h/2, '#c98a3a', 10); }
 }
 // ½ cœur pour les petits ennemis, 1 cœur pour les dangereux
-const dmgFor = e => (e.kind === 'beetle' && !e.fast) || e.kind === 'cobra' ? 2 : 4; // en quarts de cœur
+const dmgFor = e => (e.kind === 'beetle' && !e.fast) || e.kind === 'cobra' || e.kind === 'fish' ? 2 : 4; // en quarts de cœur
 function contactHit(e){
   if (p.shield > 0 && p.atk <= 0 && (upShield || facing(e))){ // bouclier baissé pendant un coup d'épée
     useShield();
@@ -1873,6 +1902,18 @@ function giveBack(e){
   else if (e.loot === 'sword'){ p.sword = true; chak = false; p.bow = false; }
   else { p.shield = Math.max(p.shield, e.lootN); p.bow = false; }
   e.loot = null; sfx.swordGet(); burst(p.x + p.w/2, p.y, '#f2c46a', 12);
+}
+function updateFish(e){ // nage sous l'eau puis bondit hors du bassin
+  if (e.st === 'swim'){
+    e.x += e.dir * 0.7; if (e.x <= e.minX || e.x >= e.maxX){ e.dir *= -1; e.x = Math.max(e.minX, Math.min(e.maxX, e.x)); }
+    e.y = e.swimY + 6 + Math.sin(tick * 0.08 + e.minX) * 3;
+    const near = !p.dying && Math.abs((p.x + p.w/2) - (e.x + e.w/2)) < 6 * T;
+    if (--e.t <= 0 && near){ e.st = 'leap'; e.vy = -5.6; e.vx = ((p.x + p.w/2) > (e.x + e.w/2) ? 1 : -1) * 1.1; e.dir = e.vx > 0 ? 1 : -1; sfx.splash(); burst(e.x + 6, e.surfY + 14, '#bfe8ff', 6); }
+  } else {
+    e.vy += GRAV * 0.8; e.x += e.vx; e.y += e.vy;
+    e.x = Math.max(e.minX - 8, Math.min(e.maxX + 8, e.x));
+    if (e.vy > 0 && e.y >= e.swimY + 4){ e.st = 'swim'; e.t = 80 + Math.floor(Math.random() * 60); e.x = Math.max(e.minX, Math.min(e.maxX, e.x)); sfx.splash(); burst(e.x + 6, e.surfY + 14, '#bfe8ff', 6); }
+  }
 }
 function updateMagpie(e){
   const D = difficulty(level);
@@ -2418,7 +2459,10 @@ function updatePlayer(){
     return;
   }
   const onMud = p.onGround && tileAt(Math.floor((p.x + p.w/2) / T), Math.floor((p.y + p.h + 1) / T)) === 'M';
-  const mv = (onMud ? 0.8 : (p.sword ? SWORD_MAXV : MAXV)) * (p.speedT > 0 ? 1.5 : 1);
+  const inWater = tileAt(Math.floor((p.x + p.w/2) / T), Math.floor((p.y + p.h * 0.6) / T)) === 'W';
+  if (inWater !== !!p.wet){ p.wet = inWater; sfx.splash(); for (let i = 0; i < 8; i++) particles.push({ x: p.x + p.w/2, y: p.y + p.h * 0.6, vx: (Math.random() - 0.5) * 2.5, vy: -Math.random() * 2.5 - 0.5, life: 26, color: '#bfe8ff', g: 0.15 }); if (inWater) tip('water'); }
+  if (inWater && tick % 18 === 0) particles.push({ x: p.x + p.w/2 + (Math.random() - 0.5) * 6, y: p.y + 3, vx: 0, vy: -0.5, life: 34, color: '#d8f4ff', g: -0.005 }); // bulles
+  const mv = (onMud ? 0.8 : inWater ? 1.1 : (p.sword ? SWORD_MAXV : MAXV)) * (p.speedT > 0 ? 1.5 : 1);
   const acc = p.speedT > 0 ? ACC * 1.5 : ACC;
   if (onMud && Math.abs(p.vx) > 0.5 && tick % 6 === 0) burst(p.x + p.w/2, p.y + p.h, '#7a5230', 2);
   if (keys.left && !keys.right){ p.vx = p.vx < -mv ? Math.min(-mv, p.vx + 0.35) : Math.max(p.vx - acc, -mv); p.face = 1; }
@@ -2459,9 +2503,13 @@ function updatePlayer(){
       for (const bb of bosses){ boss = bb; if (!boss.dead && !boss.gone && boss.state !== 'sleep' && boss.inv <= 0 && overlap(box, boss)) damageBoss(3); }
     }
   }
+  if (inWater && p.buf > 0){ // brasse ; la tête hors de l'eau : saut pour sortir
+    const headOut = tileAt(Math.floor((p.x + p.w/2) / T), Math.floor((p.y - 3) / T)) !== 'W';
+    p.vy = headOut ? -6.4 : -3.2; p.buf = 0; p.coyote = 0; sfx.stroke();
+  }
   if (p.buf > 0 && p.coyote > 0){ p.vy = JUMPV; p.buf = 0; p.coyote = 0; sfx.jump(); p.sq = 1.28; }
   if (!keys.jump && p.vy < -2.6) p.vy = -2.6;
-  p.vy = Math.min(p.vy + GRAV * (p.feather > 0 ? 0.62 : 1), p.feather > 0 ? 3.4 : 6.5); // la plume rend le fennec plus léger
+  p.vy = inWater ? Math.min(p.vy + GRAV * 0.22, 1.1) : Math.min(p.vy + GRAV * (p.feather > 0 ? 0.62 : 1), p.feather > 0 ? 3.4 : 6.5); // eau : on coule doucement ; plume : plus léger
 
   if (moveX(p, p.vx)) p.vx = 0;
   const wasAir = !p.onGround;
@@ -2474,6 +2522,7 @@ function updatePlayer(){
   const l = Math.floor(p.x/T), r = Math.floor((p.x+p.w-0.01)/T), t = Math.floor(p.y/T), b = Math.floor((p.y+p.h-0.01)/T);
   for (let ty=t; ty<=b; ty++) for (let tx=l; tx<=r; tx++){
     if (tileAt(tx,ty) === 'o'){ map[ty][tx] = '.'; addGem(1, 10); burst(tx*T+8, ty*T+8, '#7ff0e4', 5); }
+    else if (waterGems.has(tx + ',' + ty)){ waterGems.delete(tx + ',' + ty); addGem(3, 30); burst(tx*T+8, ty*T+8, '#f2b53c', 6); } // gemme au fond de l'eau
   }
   if (p.inv > 0) p.inv--;
   if (p.growT > 0) p.growT--;
@@ -2506,6 +2555,7 @@ function updateEnemies(){
     else if (e.kind === 'golem') updateGolem(e);
     else if (e.kind === 'jerboa') updateJerboa(e);
     else if (e.kind === 'magpie') updateMagpie(e);
+    else if (e.kind === 'fish') updateFish(e);
     else {
       e.vx = e.dir * e.speed;
       if (moveX(e, e.vx)) e.dir *= -1;
@@ -2528,7 +2578,7 @@ function updateEnemies(){
       if (p.vy > 0 && (p.y + p.h) - e.y < 9){
         e.dead = true; e.t = 30; e.flip = e.kind === 'vulture' || e.kind === 'magpie'; e.vy = 0; loot(e); freeze(3); stat('stomps'); p.combo = (p.combo || 0) + 1; if (p.combo >= 3) ach('combo'); burst(e.x + e.w/2, e.y, '#ffffff', 4);
         p.vy = keys.jump ? -7.8 : -4.8; p.coyote = 0;
-        score += (e.fast || e.kind !== 'beetle') ? 200 : 100; sfx.stomp(); burst(e.x+7, e.y+5, e.kind === 'cobra' ? '#c9a227' : e.kind === 'vulture' ? '#efe6da' : e.kind === 'worm' ? '#d9a07a' : e.kind === 'jerboa' ? '#e3b77a' : e.kind === 'magpie' ? '#f4f0ff' : e.fast ? '#f0806a' : '#8f7be0', 6);
+        score += (e.fast || e.kind !== 'beetle') ? 200 : 100; sfx.stomp(); burst(e.x+7, e.y+5, e.kind === 'cobra' ? '#c9a227' : e.kind === 'vulture' ? '#efe6da' : e.kind === 'worm' ? '#d9a07a' : e.kind === 'jerboa' ? '#e3b77a' : e.kind === 'magpie' ? '#f4f0ff' : e.kind === 'fish' ? '#7fd0ff' : e.fast ? '#f0806a' : '#8f7be0', 6);
       } else if (p.inv <= 0) contactHit(e);
     }
   }
@@ -2758,6 +2808,15 @@ function drawTile(c, tx, ty, x, y){
     }
   } else if (c === 'o'){
     drawGem(x + 8, y + 8 + Math.round(Math.sin(tick*0.08 + tx)*1.5), tx);
+  }
+}
+function drawWater(tx, ty, x, y){
+  if (waterGems.has(tx + ',' + ty)) drawGem(x + 8, y + 9 + Math.round(Math.sin(tick * 0.06 + tx)), tx, 'topaz');
+  const top = tileAt(tx, ty - 1) !== 'W';
+  ctx.fillStyle = 'rgba(64,150,205,.55)'; ctx.fillRect(x, y, T, T);
+  ctx.fillStyle = 'rgba(160,220,255,.18)'; ctx.fillRect(x + (tx * 5 + Math.floor(tick * 0.2)) % 12, y + 6 + (ty % 2) * 4, 4, 1); // reflets
+  if (top){
+    for (let i = 0; i < T; i++){ const wv = Math.round(Math.sin((tx * T + i) * 0.35 + tick * 0.07) * 1.2); ctx.fillStyle = 'rgba(200,240,255,.85)'; ctx.fillRect(x + i, y + wv, 1, 2); }
   }
 }
 function drawLava(tx, ty, x, y){
@@ -3021,7 +3080,7 @@ function draw(){
     if (ix > -16 && ix < VW + 16) ctx.drawImage(it.kind === 'feather' ? FEATHER : it.kind === 'speed' ? SANDAL : FIG, ix, iy);
   }
   for (let ty=0; ty<H; ty++) for (let tx=t0; tx<=t1; tx++){
-    const c = map[ty][tx]; if (c !== '.' && c !== 'Q') drawTile(c, tx, ty, tx*T - cx, ty*T);
+    const c = map[ty][tx]; if (c !== '.' && c !== 'Q' && c !== 'W') drawTile(c, tx, ty, tx*T - cx, ty*T);
   }
   drawProps(cx, t0, t1);
   drawSigns(cx);
@@ -3038,6 +3097,7 @@ function draw(){
     if (e.kind === 'cobra'){ img = (e.rear > 0 ? COBRA.rear : COBRA.idle)[e.dir > 0 ? 0 : 1]; if (e.rear > 0 && e.rear % 4 < 2) sx += 1; }
     else if (e.kind === 'vulture'){ const fr = (e.state === 'dive' || e.dead) ? 0 : Math.floor(tick / (e.state === 'warn' ? 4 : 9)) % 2; img = VULT[fr][e.dir > 0 ? 0 : 1]; }
     else if (e.kind === 'jackal') img = JACKAL[Math.abs(e.vx) > 0.3 && e.onGround ? Math.floor(tick / 5) % 2 : 0][e.dir > 0 ? 0 : 1];
+    else if (e.kind === 'fish') img = FISH[e.dir > 0 ? 0 : 1];
     else if (e.kind === 'magpie'){ const fr = (e.state === 'dive' || e.dead) ? 0 : Math.floor(tick / (e.state === 'warn' || e.state === 'flee' ? 3 : 7)) % 2; img = MAGPIE[fr][e.dir > 0 ? 0 : 1]; }
     else if (e.kind === 'jerboa'){ img = JERBOA[e.onGround || e.dead ? 0 : 1][e.dir > 0 ? 0 : 1]; sx -= 1; }
     else if (e.kind === 'bscorp'){ img = BSCORP[e.dir > 0 ? 0 : 1]; if (e.st === 'warn' && e.t % 4 < 2) sx += 1; }
@@ -3184,6 +3244,7 @@ function draw(){
   for (let ty=QS_ROW; ty<H; ty++) for (let tx=t0; tx<=t1; tx++){
     if (map[ty][tx] === 'Q') drawTile('Q', tx, ty, tx*T - cx, ty*T);
   }
+  for (let ty = 0; ty < H; ty++) for (let tx = t0; tx <= t1; tx++) if (map[ty][tx] === 'W') drawWater(tx, ty, tx*T - cx, ty*T);
   if (geysers.length) drawGeysers(cx);
   drawVignette();
   drawHearts();
