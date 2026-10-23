@@ -236,6 +236,9 @@ const STR = {
     hint4: "Niveau 4 : scarabées en patrouille à deux, et sable lourd (plus sombre) qui ralentit fortement. Nouvelle arme : l'arc, qui tire à distance mais remplace l'épée et le bouclier.",
     hint7: 'Niveau 7 : les gerboises avancent par bonds et sautent vers toi quand tu approches. Écrase-les à la retombée, ou passe sous leur saut.',
     hint8: 'Niveau 8 : la pie des sables pique sur toi pour voler ton arme ou ton bouclier. Touche-la avant qu’elle quitte l’écran pour le récupérer.',
+    simHint3: 'Simoun, niveau 3 : un chakram est peut-être caché. Lancé avec X, il traverse les ennemis et revient dans ta main.',
+    simHint6: 'Simoun, niveau 6 : les golems de feu arrivent. Ils encaissent trois coups, leurs ondes de choc brûlent et ils te lancent une boule de feu après chaque coup au sol.',
+    hintTwin: l => 'Niveau ' + l + ' : deux scorpions géants à la fois ! Ils chargent et tirent chacun de leur côté. Le portail ne s’ouvre qu’une fois les deux vaincus.',
     hint11: 'Niveau 11 : le chacal te repère de loin et te poursuit en sautant les obstacles. Saute-lui dessus ou distance-le.',
     hint12: 'Niveau 12 : le scorpion noir a une carapace à piques, ne lui saute pas dessus ! Frappe-le à l’épée, à l’arc ou par une jarre, ou esquive sa charge.',
     hint14: 'Niveau 14 : le golem de grès encaisse deux coups et frappe le sol. Saute par-dessus ses ondes de choc.',
@@ -243,7 +246,7 @@ const STR = {
     hintBoss: l => 'Niveau ' + l + ' : combat contre le scorpion géant. Il charge et lance des pierres. Saute-lui sur le dos quand il est sonné contre un mur. Le vaincre te donne un cœur de plus.',
     hintMore: l => 'Niveau ' + l + ' : un désert plus long, plus de scarabées, plus rapides.',
     biome: n => 'Nouveau décor : ' + n + '. ',
-    scimitar: 'Cimeterre', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
+    scimitar: 'Cimeterre', chakram: 'Chakram', atkRing: 'ANNEAU', bow: 'Arc', power: 'Bonus', feather: 'Plume', speed: 'Vitesse', boss: 'SCORPION GÉANT',
     themes: ['Désert au crépuscule', 'Canyon de nuit', "Oasis à l'aube", 'Tempête de sable'],
     tipNew: 'Nouveau',
     winTitle: 'Le désert est traversé !', winTitleSim: 'Le Simoun est dompté !',
@@ -263,6 +266,7 @@ const STR = {
       upBow: ['Arc renforcé', '2 flèches, carquois 20'],
       upSword: ['Cimeterre aiguisé', 'portée + coupe les tirs'],
       upShield: ['Bouclier renforcé', '5 coups, dos protégé'],
+      chakram: ['Chakram', 'revient dans ta main'],
       life: ['Vie', '+1 vie'],
       feather: ['Plume', '20 s, saut plané'],
       speed: ['Babouches', '10 s, plus rapide'],
@@ -277,6 +281,7 @@ const STR = {
       shield: ['Bouclier', () => 'Il arrête 3 attaques venues de face, venin compris. Fais face au danger : un coup dans le dos passe quand même.'],
       sword: ['Cimeterre', m => (m ? 'Bouton ÉPÉE' : 'Touche X') + ' pour frapper. Il tue d’un coup, mais ralentit ta course et n’arrête pas le venin.'],
       bow: ['Arc', m => (m ? 'Bouton ARC' : 'Touche X') + ' pour tirer : 12 flèches qui tuent à distance, à recharger à l’échoppe. L’arc remplace l’épée et le bouclier.'],
+      chakram: ['Chakram', m => (m ? 'Bouton ANNEAU' : 'Touche X') + ' pour lancer l’anneau : il traverse les ennemis et revient dans ta main. Pas de munitions, mais un seul lancer à la fois.'],
       magpie: ['Pie des sables', () => 'Elle t’a volé ton équipement ! Touche-la avant qu’elle quitte l’écran pour le récupérer.'],
       feather: ['Plume', () => 'Pendant 20 secondes, tu sautes plus haut et tu retombes en planant.'],
       speed: ['Babouches du vent', () => 'Pendant 10 secondes, tu cours 50 % plus vite. Attention à ne pas foncer dans un trou !'],
@@ -310,6 +315,9 @@ const STR = {
     hint4: 'Level 4: beetles patrol in pairs, and heavy sand (darker) slows you down a lot. New weapon: the bow shoots from a distance, but it replaces the sword and the shield.',
     hint7: 'Level 7: jerboas move in hops and leap at you when you get close. Stomp them as they land, or slip under their jump.',
     hint8: 'Level 8: the sand magpie dives at you to steal your weapon or shield. Hit it before it leaves the screen to get it back.',
+    simHint3: 'Simoom, level 3: a chakram may be hidden. Thrown with X, it cuts through enemies and comes back to your hand.',
+    simHint6: 'Simoom, level 6: fire golems arrive. They take three hits, their shockwaves burn and they throw a fireball at you after each ground pound.',
+    hintTwin: l => 'Level ' + l + ': two giant scorpions at once! Each one charges and shoots on its own. The portal only opens once both are defeated.',
     hint11: 'Level 11: the jackal spots you from afar and chases you, jumping over obstacles. Stomp it or outrun it.',
     hint12: 'Level 12: the black scorpion has a spiked shell, do not jump on it! Hit it with the sword, the bow or a jar, or dodge its charge.',
     hint14: 'Level 14: the sandstone golem takes two hits and pounds the ground. Jump over its shockwaves.',
@@ -317,7 +325,7 @@ const STR = {
     hintBoss: l => 'Level ' + l + ': fight the giant scorpion. It charges and throws rocks. Jump on its back while it is stunned against a wall. Beating it gives you one extra heart.',
     hintMore: l => 'Level ' + l + ': a longer desert, more beetles, and faster ones.',
     biome: n => 'New scenery: ' + n + '. ',
-    scimitar: 'Scimitar', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
+    scimitar: 'Scimitar', chakram: 'Chakram', atkRing: 'RING', bow: 'Bow', power: 'Bonus', feather: 'Feather', speed: 'Speed', boss: 'GIANT SCORPION',
     themes: ['Desert at dusk', 'Night canyon', 'Oasis at dawn', 'Sandstorm'],
     tipNew: 'New',
     winTitle: 'The desert is crossed!', winTitleSim: 'The Simoom is tamed!',
@@ -337,6 +345,7 @@ const STR = {
       upBow: ['Strong bow', '2 arrows, quiver of 20'],
       upSword: ['Sharp scimitar', 'reach + cuts shots'],
       upShield: ['Strong shield', '5 hits, guards your back'],
+      chakram: ['Chakram', 'comes back to you'],
       life: ['Life', '+1 life'],
       feather: ['Feather', '20 s, gliding jumps'],
       speed: ['Wind slippers', '10 s, faster'],
@@ -351,6 +360,7 @@ const STR = {
       shield: ['Shield', () => 'Blocks 3 attacks from the front, venom included. Face the danger: a hit from behind still gets through.'],
       sword: ['Scimitar', m => (m ? 'SWORD button' : 'Press X') + ' to strike. It kills in one hit, but slows you down and does not stop venom.'],
       bow: ['Bow', m => (m ? 'BOW button' : 'Press X') + ' to shoot: 12 arrows that kill from a distance, refilled at the shop. The bow replaces the sword and the shield.'],
+      chakram: ['Chakram', m => (m ? 'RING button' : 'Press X') + ' to throw the ring: it cuts through enemies and comes back to your hand. No ammo, but one throw at a time.'],
       magpie: ['Sand magpie', () => 'It stole your gear! Hit it before it leaves the screen to get it back.'],
       feather: ['Feather', () => 'For 20 seconds, you jump higher and glide down slowly.'],
       speed: ['Wind slippers', () => 'For 10 seconds, you run 50% faster. Careful not to rush into a pit!'],
@@ -709,6 +719,9 @@ const BOSS_IMG = sprite([
   "........................",
 ], { s:'#e0473a', d:'#6e4428', p:'#3b2618', h:'#8a5a34', c:'#8a5232', e:'#ffd27a', b:'#2a1a10', l:'#4a2f1e' });
 const BOSS = [BOSS_IMG, flipped(BOSS_IMG)];
+function tinted(src, col){ const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d'); x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height); return c; }
+const BOSS_TWIN_IMG = tinted(BOSS_IMG, 'rgba(110,10,30,.5)'); // le second scorpion, plus sombre
+const BOSS_TWIN = [BOSS_TWIN_IMG, flipped(BOSS_TWIN_IMG)];
 const FLASK = sprite([
   "...kk.....",
   "...cc.....",
@@ -765,7 +778,7 @@ function difficulty(L){
     jerboaP: L >= 7 ? Math.min(0.18 + 0.03 * (L - 7), 0.35) : 0,
     magpieP: L >= 8 ? Math.min(0.1 + 0.03 * (L - 8), 0.25) : 0,
     jerboaV: Math.min(1.1 + 0.05 * Math.max(0, L - 7), 1.6),
-    golemP: L >= 14 ? Math.min(0.1 + 0.03 * (L - 14), 0.3) : 0,
+    golemP: L >= (simoun ? 6 : 14) ? Math.min(0.1 + 0.03 * (L - (simoun ? 6 : 14)), 0.3) : 0, // Simoun : golems de feu dès le niveau 6
     jackalV: Math.min(1.6 + 0.04 * Math.max(0, L - 11), 2.05),
     dashV: Math.min(3 + 0.1 * Math.max(0, L - 12), 3.8),
     golemCd: Math.max(170 - 5 * Math.max(0, L - 14), 110),
@@ -774,7 +787,7 @@ function difficulty(L){
   };
 }
 
-let drops = [], dropsLeft = 1, boss = null, arena = null, gemDrops = [], arrows = [], wormTimer = 120, crumble = {};
+let drops = [], dropsLeft = 1, boss = null, bosses = [], arena = null, gemDrops = [], arrows = [], wormTimer = 120, crumble = {};
 let W, map, groundTop, rockBase, enemies, portal, checkpoint, bumps, items = [], pickups = [], shots = [];
 function generate(L, seed){
   const rnd = mulberry32(seed);
@@ -927,6 +940,12 @@ function generate(L, seed){
     const grounds = flatSpots.filter(([c]) => c > 14 && c < W * 0.8 && used.every(u => Math.abs(u - c) > 6));
     if (grounds.length){ const s = grounds[Math.floor(rnd() * grounds.length)]; pickups.push({ kind:'bow', x: s[0] * T + 3, y: s[1] * T - 14, w: 10, h: 12, gone: false }); }
   }
+  // chakram : seulement en Simoun, à partir du niveau 3
+  if (simoun && L >= 3 && chance(0.5)){
+    const used = pickups.map(k => Math.floor(k.x / T));
+    const grounds = flatSpots.filter(([c]) => c > 14 && c < W * 0.8 && used.every(u => Math.abs(u - c) > 6));
+    if (grounds.length){ const s = grounds[Math.floor(rnd() * grounds.length)]; pickups.push({ kind:'chakram', x: s[0] * T + 1, y: s[1] * T - 12, w: 10, h: 10, gone: false }); }
+  }
   // beetles (never near the start or the checkpoint)
   enemies = enemySpots
     .filter(([c]) => c > 12 && Math.abs(c - cp.col) > 4)
@@ -943,7 +962,7 @@ function generate(L, seed){
     enemies.push({ kind: 'cobra', x: c * T + 1, y: row * T - 14, w: 14, h: 14, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, cd: 30, rear: 0 });
   }
   // ennemis coriaces : au moins un de chaque type à son niveau d'apparition
-  for (const [kind, from] of [['jerboa', 7], ['magpie', 8], ['jackal', 11], ['bscorp', 12], ['golem', 14]]){
+  for (const [kind, from] of [['jerboa', 7], ['magpie', 8], ['jackal', 11], ['bscorp', 12], ['golem', simoun ? 6 : 14]]){
     if (L >= from && !foeSpots.some(f => f[0] === kind)){
       const f = flatSpots.filter(([c]) => c > 18 && Math.abs(c - cp.col) > 6);
       if (f.length){ const s = f[Math.floor(rnd() * f.length)]; foeSpots.push([kind, s[0], s[1]]); }
@@ -955,7 +974,7 @@ function generate(L, seed){
     else if (kind === 'bscorp') enemies.push({ kind, x: c * T + 1, y: row * T - 9, w: 14, h: 9, vx: 0, vy: 0, dir: chance(0.5) ? -1 : 1, dead: false, t: 0, gone: false, fast: false, onGround: false, st: 'walk', cd: 0 });
     else if (kind === 'magpie'){ const alt = 2 * T + ri(0, 16); enemies.push({ kind, x: c * T, y: alt, homeX: c * T, alt, w: 14, h: 8, vx: 0, vy: 0, dir: -1, dead: false, t: ri(0, 200), gone: false, fast: false, state: 'patrol', cd: 60, wt: 0, rt: 0, tx: 0, ty: 0, loot: null, lootN: 0 }); }
     else if (kind === 'jerboa') enemies.push({ kind, x: c * T + 2, y: row * T - 12, w: 12, h: 12, vx: 0, vy: 0, dir: chance(0.5) ? -1 : 1, dead: false, t: 0, gone: false, fast: false, onGround: false, wait: 20 + ri(0, 30) });
-    else enemies.push({ kind, x: c * T - 2, y: row * T - 24, w: 20, h: 24, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, onGround: false, st: 'walk', cd: 80, hp: 2, inv: 0 });
+    else enemies.push({ kind, x: c * T - 2, y: row * T - 24, w: 20, h: 24, vx: 0, vy: 0, dir: -1, dead: false, t: 0, gone: false, fast: false, onGround: false, st: 'walk', cd: 80, hp: simoun ? 3 : 2, inv: 0, fire: simoun });
   }
   if (L >= 3 && vultureSpots.length === 0 && flatSpots.length > 3) vultureSpots.push(flatSpots[Math.floor(flatSpots.length / 2)]);
   for (const [c] of vultureSpots){
@@ -965,7 +984,7 @@ function generate(L, seed){
   }
   checkpoint = { x: cp.col * T, top: cp.top, lit: false };
   portal = { x: (W - 8) * T, y: groundTop[W - 8] * T - 48, w: 32, h: 48 };
-  items = []; bumps = {}; drops = []; dropsLeft = 1; boss = null; arena = null; gemDrops = []; arrows = []; wormTimer = 120; crumble = {};
+  items = []; bumps = {}; drops = []; dropsLeft = 1; boss = null; bosses = []; arena = null; gemDrops = []; arrows = []; wormTimer = 120; crumble = {};
   return top;
 }
 // Walk the main path column by column and check every transition with the jump simulation.
@@ -1002,11 +1021,13 @@ function generateBoss(L, seed){
   enemies = []; items = []; bumps = {}; pickups = []; shots = []; drops = []; dropsLeft = 1; gemDrops = []; arrows = []; crumble = {};
   checkpoint = { x: (x0 - 6) * T, top: G, lit: false };
   portal = { x: (W - 6) * T, y: G * T - 48, w: 32, h: 48, active: false };
-  boss = makeBoss(L);
+  bosses = [makeBoss(L, 0)]; if (simoun && L >= 10) bosses.push(makeBoss(L, 1)); // Simoun : deux scorpions dès le niveau 10
+  boss = bosses[0];
   rnd();
 }
-function makeBoss(L){
-  return { x: (arena.x1 - 6) * T, y: 12 * T - 20, w: 44, h: 20, hp: L % 20 === 0 ? 22 : 15, maxHp: L % 20 === 0 ? 22 : 15, dir: -1, state: 'sleep', t: 0, inv: 0, next: 'charge', dead: false, deathT: 0, gone: false, L, kind: 'boss' };
+function makeBoss(L, slot = 0){
+  const twin = simoun && L >= 10, base = L % 20 === 0 ? 22 : 15, hpMax = twin ? Math.round(base * 0.75) : base;
+  return { x: (arena.x1 - 6 - slot * 9) * T, y: 12 * T - 20, w: 44, h: 20, hp: hpMax, maxHp: hpMax, dir: -1, state: 'sleep', t: slot * 40, inv: 0, next: slot ? 'throw' : 'charge', dead: false, deathT: 0, gone: false, L, slot, kind: 'boss' };
 }
 function setGate(closed){
   if (!arena) return;
@@ -1014,8 +1035,8 @@ function setGate(closed){
   for (let y = 5; y < 12; y++) map[y][arena.gateCol] = closed ? 'R' : '.';
 }
 function resetBossFight(){
-  if (!boss || boss.dead) return;
-  const L = boss.L; boss = makeBoss(L); setGate(false); shots = [];
+  if (!bosses.some(b => !b.dead)) return;
+  bosses = bosses.map(b => b.dead ? b : makeBoss(b.L, b.slot)); boss = bosses[0]; setGate(false); shots = [];
 }
 function buildLevel(L, seed){
   if (isBossLevel(L)){ generateBoss(L, seed); return; }
@@ -1159,6 +1180,7 @@ let state = 'title', p = null, camX = 0, score = 0, gems = 0, lives = 3, gemsToL
 let level = 1, runSeed = 1;
 let hp = 12, maxHp = 12; // en quarts de cœur : 12 = 3 cœurs
 let arrowsLeft = 0; // flèches de l'arc
+let chak = false, ring = null; // chakram (Simoun) : arme tenue, anneau en vol
 let upBow = false, upSword = false, upShield = false; // améliorations d'armes achetées à l'échoppe
 const arrowsMax = () => upBow ? 20 : 12, shieldMax = () => upShield ? 5 : 3;
 let healBought = 0, buyFeather = false, buySpeed = false; // plume / babouches achetées : actives au début du niveau suivant // cœurs achetés à l'échoppe : le prix monte à chaque achat
@@ -1198,13 +1220,13 @@ let runStart = null;
 function readSave(){ try { const v = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return v && v.v === 1 && v.level >= 1 ? v : null; } catch(e){ return null; } }
 function writeSave(o){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch(e){} }
 function clearSave(){ try { localStorage.removeItem(SAVE_KEY); } catch(e){} }
-function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, up: [upBow, upSword, upShield], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
+function snapshot(lv, big, shield, sword, bow){ return { v:1, level: lv, score, lives, gems, gemsToLife, big: !!big, shield: shield || 0, sword: !!sword, bow: !!bow, runSeed, q: 1, simoun, hp, maxHp, healBought, arrows: arrowsLeft, chakram: chak, up: [upBow, upSword, upShield], found: [...runFound], feather: buyFeather, speed: buySpeed }; }
 function continueRun(){
   const sv = readSave(); if (!sv) return startRun();
   initAudio();
   runSeed = sv.runSeed; score = sv.score; lives = sv.lives; gems = sv.gems; gemsToLife = sv.gemsToLife;
   const k = sv.q ? 1 : 2; // anciennes sauvegardes : demi-cœurs
-  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; [upBow, upSword, upShield] = (sv.up || [false, false, false]).map(Boolean); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
+  simoun = !!sv.simoun; maxHp = sv.maxHp ? sv.maxHp * k : 12; hp = Math.min(sv.hp ? sv.hp * k : maxHp, maxHp); healBought = sv.healBought || 0; chak = !!sv.chakram; [upBow, upSword, upShield] = (sv.up || [false, false, false]).map(Boolean); arrowsLeft = sv.arrows ?? (sv.bow ? arrowsMax() : 0); runFound = new Set(sv.found || []); buyFeather = !!sv.feather; buySpeed = !!sv.speed;
   loadLevel(sv.level, sv.big, sv.shield, sv.sword, sv.bow);
 }
 let ovRender = null;
@@ -1222,7 +1244,7 @@ function showTitle(){
 }
 function quitToTitle(){
   tipQueue = []; tipKey = null; toastEl.hidden = true;
-  state = 'title'; p = null; shots = []; boss = null;
+  state = 'title'; p = null; shots = []; boss = null; bosses = []; ring = null;
   buildLevel(3, Math.floor(Math.random() * 1e9));
   showTitle();
 }
@@ -1230,7 +1252,7 @@ function loadLevel(n, keepBig, keepShield, keepSword, keepBow){
   level = n;
   buildLevel(level, runSeed + level * 7919);
   frames = 0; particles = []; setTheme(level);
-  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0;
+  spawnPlayer(keepBig, keepShield, keepSword, keepBow); p.inv = 0; ring = null;
   if (buyFeather){ p.feather = 1200; buyFeather = false; }
   if (buySpeed){ p.speedT = 600; buySpeed = false; }
   runStart = snapshot(level, keepBig, keepShield, keepSword, keepBow); writeSave(runStart);
@@ -1242,7 +1264,7 @@ function startRun(mode = false){
   initAudio(); simoun = !!mode;
   if (!simoun){ try { localStorage.removeItem('fennec-simoun'); } catch(e){} } // tout est perdu : il faut refranchir le niveau 20
   runSeed = Math.floor(Math.random() * 1e9);
-  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; upBow = upSword = upShield = false; runFound = new Set(); buyFeather = buySpeed = false;
+  score = 0; gems = 0; lives = 3; gemsToLife = 100; hp = maxHp = 12; healBought = 0; arrowsLeft = 0; chak = false; upBow = upSword = upShield = false; runFound = new Set(); buyFeather = buySpeed = false;
   loadLevel(1, false);
 }
 function menuAction(){
@@ -1268,9 +1290,10 @@ function shopItems(){
     { id: 'heal', cat: 'care', price: 12 + 6 * healBought, ok: hp < maxHp, owned: false, buy(){ hp = Math.min(maxHp, hp + 4); healBought++; } },
     { id: 'big', cat: 'items', key: 'fig', price: 15, ok: !p.big, owned: p.big, buy(){ p.big = true; } },
     { id: 'shield', cat: 'items', key: 'shield', price: 20, ok: p.shield < shieldMax(), owned: p.shield >= shieldMax(), buy(){ p.shield = shieldMax(); p.bow = false; } },
-    { id: 'sword', cat: 'weapons', key: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; p.bow = false; } },
-    { id: 'bow', cat: 'weapons', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); } },
+    { id: 'sword', cat: 'weapons', key: 'sword', price: 30, ok: !p.sword, owned: p.sword, buy(){ p.sword = true; chak = false; p.bow = false; } },
+    { id: 'bow', cat: 'weapons', key: 'bow', price: 60, ok: !p.bow, owned: p.bow, buy(){ p.bow = true; chak = false; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); } },
     { id: 'arrows', cat: 'weapons', key: 'bow', price: 15, ok: p.bow && arrowsLeft < arrowsMax(), owned: false, buy(){ arrowsLeft = arrowsMax(); } },
+    { id: 'chakram', cat: 'weapons', key: 'chakram', simOnly: true, price: 50, ok: !chak, owned: chak, buy(){ chak = true; p.sword = false; p.bow = false; } },
     { id: 'upBow', cat: 'up', key: 'bow', price: 200, ok: !upBow, owned: upBow, buy(){ upBow = true; if (p.bow) arrowsLeft = arrowsMax(); } },
     { id: 'upSword', cat: 'up', key: 'sword', price: 200, ok: !upSword, owned: upSword, buy(){ upSword = true; } },
     { id: 'upShield', cat: 'up', key: 'shield', price: 150, ok: !upShield, owned: upShield, buy(){ upShield = true; if (p.shield > 0) p.shield = shieldMax(); } },
@@ -1285,8 +1308,8 @@ function renderShop(){
   shopEl.replaceChildren();
   const h = document.createElement('h3'); h.textContent = t('shopTitle', gems); shopEl.append(h);
   const row = document.createElement('div'); row.className = 'shop-items';
-  const CATS = ['care', 'items', 'weapons', 'up'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'upSword', 'upBow', 'upShield'];
-  const list = shopItems().sort((a, b) => CATS.indexOf(a.cat) - CATS.indexOf(b.cat) || ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+  const CATS = ['care', 'items', 'weapons', 'up'], ORDER = ['heal', 'maxHeart', 'life', 'big', 'shield', 'feather', 'speed', 'sword', 'bow', 'arrows', 'chakram', 'upSword', 'upBow', 'upShield'];
+  const list = shopItems().filter(it => !it.simOnly || simoun).sort((a, b) => CATS.indexOf(a.cat) - CATS.indexOf(b.cat) || ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
   let cat = null;
   for (const it of list){
     if (it.cat !== cat){ cat = it.cat; const c = document.createElement('span'); c.className = 'shop-cat'; c.textContent = STR[lang].shopCats[cat]; row.append(c); }
@@ -1349,8 +1372,8 @@ function loseLife(){
       else showOverlay(t('overTitle'), t('overText', L0, S0, G0), rec, t('newGame'));
     });
   } else {
-    hp = maxHp; spawnPlayer(false); resetBossFight();
-    if (runStart){ runStart.hp = hp; runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; writeSave(runStart); }
+    hp = maxHp; chak = false; ring = null; spawnPlayer(false); resetBossFight();
+    if (runStart){ runStart.hp = hp; runStart.lives = lives; runStart.big = false; runStart.shield = 0; runStart.sword = false; runStart.bow = false; runStart.chakram = false; writeSave(runStart); }
   }
 }
 function winGame(){
@@ -1370,7 +1393,7 @@ function winLevel(){
   const L0 = level, B0 = bonus, S0 = score, T0 = fmtTime(frames), N = level + 1;
   ui(() => {
     const newBiome = themeFor(N) !== themeFor(L0) ? t('biome', STR[lang][simoun ? 'simThemes' : 'themes'][themeFor(N)]) : '';
-    const hint = isBossLevel(N) ? t('hintBoss', N) : (STR[lang]['hint' + N] || t('hintMore', N));
+    const hint = isBossLevel(N) ? (simoun && N >= 10 ? t('hintTwin', N) : t('hintBoss', N)) : ((simoun && STR[lang]['simHint' + N]) || STR[lang]['hint' + N] || t('hintMore', N));
     showOverlay(t('clearTitle', L0), t('clearText', T0, B0, S0), newBiome + hint, t('next', N));
     renderShop();
   });
@@ -1478,19 +1501,20 @@ function updateVulture(e){
   }
 }
 /* ---------- pie des sables : pique sur le fennec pour lui voler son équipement ---------- */
-const hasLoot = () => p.bow || p.sword || p.shield > 0;
+const hasLoot = () => p.bow || chak || p.sword || p.shield > 0;
 function stealFrom(e){
-  const what = p.bow ? 'bow' : p.sword ? 'sword' : p.shield > 0 ? 'shield' : null;
+  const what = p.bow ? 'bow' : chak ? 'chakram' : p.sword ? 'sword' : p.shield > 0 ? 'shield' : null;
   if (!what){ e.state = 'rise'; e.rt = 0; return; }
   e.loot = what; e.lootN = what === 'bow' ? arrowsLeft : what === 'shield' ? p.shield : 0;
-  if (what === 'bow'){ p.bow = false; arrowsLeft = 0; } else if (what === 'sword') p.sword = false; else p.shield = 0;
+  if (what === 'bow'){ p.bow = false; arrowsLeft = 0; } else if (what === 'chakram'){ chak = false; ring = null; } else if (what === 'sword') p.sword = false; else p.shield = 0;
   e.state = 'flee'; e.dir = (e.x + e.w/2) >= (p.x + p.w/2) ? 1 : -1;
   sfx.steal(); tip('magpie'); burst(p.x + p.w/2, p.y + 4, '#f4f0ff', 10); p.inv = Math.max(p.inv, 30);
 }
 function giveBack(e){
   if (!e.loot) return;
-  if (e.loot === 'bow'){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = e.lootN; }
-  else if (e.loot === 'sword'){ p.sword = true; p.bow = false; }
+  if (e.loot === 'bow'){ p.bow = true; chak = false; p.sword = false; p.shield = 0; arrowsLeft = e.lootN; }
+  else if (e.loot === 'chakram'){ chak = true; p.sword = false; p.bow = false; }
+  else if (e.loot === 'sword'){ p.sword = true; chak = false; p.bow = false; }
   else { p.shield = Math.max(p.shield, e.lootN); p.bow = false; }
   e.loot = null; sfx.swordGet(); burst(p.x + p.w/2, p.y, '#f2c46a', 12);
 }
@@ -1561,20 +1585,21 @@ function throwRocks(n){
     shots.push({ x: sx, y: b.y - 8, w: 7, h: 7, vx: (target - sx) / 48, vy: -5.2, grav: true, rock: true, life: 260, gone: false });
   }
 }
-function updateBoss(){
+function updateBoss(){ for (const b of bosses){ boss = b; updateOneBoss(); } }
+function updateOneBoss(){
   const b = boss;
   if (!b || b.gone) return;
   if (b.dead){
     b.deathT++;
     if (b.deathT % 5 === 0) burst(b.x + Math.random() * b.w, b.y + Math.random() * b.h, Math.random() < 0.5 ? '#ffd27a' : '#e0473a', 4);
-    if (b.deathT === 90){ b.gone = true; portal.active = true; setGate(false); bossReward(); sfx.win(); }
+    if (b.deathT === 90){ b.gone = true; if (bosses.every(x => x.gone)){ portal.active = true; setGate(false); bossReward(); sfx.win(); } } // portail : seulement quand tous les scorpions sont vaincus
     return;
   }
   if (b.state === 'sleep'){
     if (p.x > (arena.x0 + 2) * T && !p.dying){ setGate(true); sfx.gate(); sfx.roar(); b.state = 'intro'; b.t = 70; }
     return;
   }
-  const D = bossDiff(b.L), rage = b.hp <= 7;
+  const D = bossDiff(b.L), rage = b.hp <= Math.ceil(b.maxHp * 0.45);
   if (b.inv > 0) b.inv--;
   const pcx = p.x + p.w/2, bcx = b.x + b.w/2;
   const minX = (arena.x0) * T, maxX = (arena.x1 + 1) * T - b.w;
@@ -1632,6 +1657,33 @@ function updateGems(){
   }
   gemDrops = gemDrops.filter(g => !g.gone);
 }
+function updateRing(){
+  if (!ring) return;
+  const r = ring; r.spin += 0.5;
+  if (!chak || p.dying){ ring = null; return; }
+  if (!r.back){
+    r.x += r.vx;
+    const tipX = r.vx > 0 ? r.x + r.w : r.x;
+    if (--r.out <= 0 || solid(tileAt(Math.floor(tipX / T), Math.floor((r.y + 4) / T)))){ r.back = true; r.hit.clear(); }
+  } else { // revient vers le fennec, même s'il a bougé
+    const dx = (p.x + p.w/2) - (r.x + 4), dy = (p.y + p.h/2) - (r.y + 4), d = Math.hypot(dx, dy) || 1;
+    r.x += dx / d * 4.8; r.y += dy / d * 4.8;
+    if (d < 10){ ring = null; return; }
+  }
+  for (const e of enemies){
+    if (e.dead || e.gone || e.h < 6 || r.hit.has(e) || !overlap(r, e)) continue;
+    r.hit.add(e);
+    if (e.kind === 'golem'){ hitEnemy(e, 1); continue; }
+    e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 200; sfx.stomp(); loot(e); burst(e.x + e.w/2, e.y + e.h/2, '#f5a34a', 6);
+  }
+  for (const b of bosses){ if (!b.dead && !b.gone && b.state !== 'sleep' && !r.hit.has(b) && b.inv <= 0 && overlap(r, b)){ r.hit.add(b); boss = b; damageBoss(2); } }
+}
+function drawChakram(cx, cy, a){
+  ctx.fillStyle = '#c9702a'; ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffd27a'; ctx.beginPath(); ctx.arc(cx, cy, 3.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a160c'; ctx.beginPath(); ctx.arc(cx, cy, 1.7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff3dc'; ctx.fillRect(Math.round(cx + Math.cos(a) * 3.5) - 1, Math.round(cy + Math.sin(a) * 3.5) - 1, 2, 2);
+}
 function updateArrows(){
   for (const a of arrows){
     if (a.gone) continue;
@@ -1644,9 +1696,10 @@ function updateArrows(){
       e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 200; sfx.stomp(); loot(e);
       burst(e.x + e.w/2, e.y + e.h/2, '#e6e9ef', 6); a.gone = true; break;
     }
+    for (const bb of bosses){ boss = bb;
     if (!a.gone && boss && !boss.dead && !boss.gone && boss.state !== 'sleep' && overlap(a, boss)){
       a.gone = true; if (boss.inv <= 0) damageBoss(2); else burst(tipX, a.y, '#c9a56a', 3);
-    }
+    } }
   }
   arrows = arrows.filter(a => !a.gone);
 }
@@ -1743,7 +1796,11 @@ function updateGolem(e){
     if (--e.t <= 0){
       sfx.gate(); burst(e.x + e.w/2, e.y + e.h, '#c98a4c', 10);
       const row = Math.floor((e.y + e.h + 1) / T), y = e.y + e.h - 8;
-      for (const d of [-1, 1]) shots.push({ x: d > 0 ? e.x + e.w : e.x - 10, y, w: 10, h: 8, vx: d * 2.6, vy: 0, life: 90, wave: true, row, gone: false });
+      for (const d of [-1, 1]) shots.push({ x: d > 0 ? e.x + e.w : e.x - 10, y, w: 10, h: 8, vx: d * 2.6, vy: 0, life: 90, wave: true, hot: !!e.fire, row, gone: false });
+      if (e.fire){ // golem de feu : une boule de feu visée en plus des ondes
+        const sx = e.x + e.w/2 - 3, sy = e.y + 2, a = Math.atan2((p.y + p.h/2) - sy, (p.x + p.w/2) - sx);
+        shots.push({ x: sx, y: sy, w: 7, h: 7, vx: Math.cos(a) * 2.6, vy: Math.sin(a) * 2.6, fire: true, life: 200, gone: false });
+      }
       e.st = 'recover'; e.t = 40;
     }
     return;
@@ -1851,6 +1908,11 @@ function updatePlayer(){
   p.buf = jumpPressed ? 7 : p.buf - 1;
   jumpPressed = false;
   if (attackPressed && p.sword && p.atkCd <= 0){ p.atk = 16; p.atkCd = 26; sfx.slash(); }
+  if (attackPressed && chak && !ring && p.atkCd <= 0){ // chakram : un seul anneau en vol à la fois
+    const dir = p.face === 0 ? 1 : -1;
+    ring = { x: dir > 0 ? p.x + p.w : p.x - 8, y: p.y + p.h * 0.4 - 4, w: 8, h: 8, vx: dir * 4.4, out: 30, back: false, hit: new Set(), spin: 0 };
+    p.atkCd = 14; sfx.slash();
+  }
   if (attackPressed && p.bow && p.atkCd <= 0 && arrowsLeft <= 0){ p.atkCd = 20; sfx.bump(); } // carquois vide
   else if (attackPressed && p.bow && p.atkCd <= 0){
     arrowsLeft--; p.atkCd = 34; p.shoot = 10; sfx.bowShot();
@@ -1873,7 +1935,7 @@ function updatePlayer(){
         e.dead = true; e.flip = true; e.vy = -3; e.t = 40; score += 200; sfx.stomp(); loot(e);
         burst(e.x + e.w/2, e.y + e.h/2, '#e6e9ef', 8);
       }
-      if (boss && !boss.dead && !boss.gone && boss.state !== 'sleep' && boss.inv <= 0 && overlap(box, boss)) damageBoss(3);
+      for (const bb of bosses){ boss = bb; if (!boss.dead && !boss.gone && boss.state !== 'sleep' && boss.inv <= 0 && overlap(box, boss)) damageBoss(3); }
     }
   }
   if (p.buf > 0 && p.coyote > 0){ p.vy = JUMPV; p.buf = 0; p.coyote = 0; sfx.jump(); }
@@ -2000,13 +2062,14 @@ function update(){
   updateEnemies();
   if (level >= 6 && !isBossLevel(level) && !p.dying && --wormTimer <= 0 && !enemies.some(e => e.kind === 'worm' && !e.gone && !e.dead)) trySpawnWorm();
   updateArrows();
+  updateRing();
   updateGems();
   updateItems();
   updateShots();
   updateDrops();
   updateBoss();
   for (const k of pickups){
-    if (!k.gone && !p.dying && overlap(p, k)){ tip(k.kind); k.gone = true; score += 500; burst(k.x + 5, k.y + 6, '#f2c46a', 12); if (k.kind === 'sword'){ p.sword = true; p.bow = false; sfx.swordGet(); } else if (k.kind === 'bow'){ p.bow = true; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); sfx.swordGet(); } else { p.shield = shieldMax(); p.bow = false; sfx.shieldGet(); } }
+    if (!k.gone && !p.dying && overlap(p, k)){ tip(k.kind); k.gone = true; score += 500; burst(k.x + 5, k.y + 6, '#f2c46a', 12); if (k.kind === 'chakram'){ chak = true; p.sword = false; p.bow = false; sfx.swordGet(); } else if (k.kind === 'sword'){ p.sword = true; chak = false; p.bow = false; sfx.swordGet(); } else if (k.kind === 'bow'){ p.bow = true; chak = false; p.sword = false; p.shield = 0; arrowsLeft = arrowsMax(); sfx.swordGet(); } else { p.shield = shieldMax(); p.bow = false; sfx.shieldGet(); } }
   }
   for (const k in bumps){ if (--bumps[k] <= 0) delete bumps[k]; }
   particles = particles.filter(q => { q.x += q.vx; q.vy += q.g; q.y += q.vy; return --q.life > 0; });
@@ -2215,17 +2278,21 @@ function drawWorm(e, x){
 }
 function drawGolem(e, x){
   if (e.inv > 0 && Math.floor(tick / 3) % 2 && !e.dead) return;
-  const y = Math.round(e.y), warn = e.st === 'warn', sh = warn && tick % 4 < 2 ? 1 : 0;
+  const y = Math.round(e.y), warn = e.st === 'warn', sh = warn && tick % 4 < 2 ? 1 : 0, F = e.fire;
+  // golem de grès, ou golem de feu (Simoun) : corps sombre et fissures incandescentes
+  const C = F ? { body:'#3a1a14', band: tick % 20 < 10 ? '#ff7a2a' : '#ff9a3a', foot:'#2a120c', head:'#4a2218', arm:'#5a2a1a', eye:'#ffe08a' }
+              : { body:'#a8553a', band:'#c9704e', foot:'#7d3326', head:'#b9583f', arm:'#8f3d2c', eye:'#ffd27a' };
   if (e.dead){ ctx.globalAlpha = Math.max(0, e.t / 40); }
-  ctx.fillStyle = '#a8553a'; ctx.fillRect(x + 2 + sh, y + 8, 16, 14);
-  ctx.fillStyle = '#c9704e'; ctx.fillRect(x + 3 + sh, y + 9, 14, 3); ctx.fillRect(x + 3 + sh, y + 15, 14, 2);
-  ctx.fillStyle = '#7d3326'; ctx.fillRect(x + 4 + sh, y + 22, 5, 2); ctx.fillRect(x + 11 + sh, y + 22, 5, 2);
-  ctx.fillStyle = '#b9583f'; ctx.fillRect(x + 5 + sh, y, 10, 8);
-  ctx.fillStyle = warn ? '#e0473a' : '#ffd27a'; ctx.fillRect(x + 7 + sh, y + 3, 2, 2); ctx.fillRect(x + 11 + sh, y + 3, 2, 2);
-  ctx.fillStyle = '#8f3d2c';
+  ctx.fillStyle = C.body; ctx.fillRect(x + 2 + sh, y + 8, 16, 14);
+  ctx.fillStyle = C.band; ctx.fillRect(x + 3 + sh, y + 9, 14, 3); ctx.fillRect(x + 3 + sh, y + 15, 14, 2);
+  ctx.fillStyle = C.foot; ctx.fillRect(x + 4 + sh, y + 22, 5, 2); ctx.fillRect(x + 11 + sh, y + 22, 5, 2);
+  ctx.fillStyle = C.head; ctx.fillRect(x + 5 + sh, y, 10, 8);
+  ctx.fillStyle = warn ? '#e0473a' : C.eye; ctx.fillRect(x + 7 + sh, y + 3, 2, 2); ctx.fillRect(x + 11 + sh, y + 3, 2, 2);
+  ctx.fillStyle = C.arm;
   if (warn){ ctx.fillRect(x - 1 + sh, y - 4, 4, 12); ctx.fillRect(x + 17 + sh, y - 4, 4, 12); }
   else { ctx.fillRect(x - 1, y + 9, 4, 11); ctx.fillRect(x + 17, y + 9, 4, 11); }
-  if (e.hp < 2){ ctx.fillStyle = '#3a1a10'; ctx.fillRect(x + 8, y + 10, 1, 6); ctx.fillRect(x + 9, y + 15, 3, 1); ctx.fillRect(x + 12, y + 16, 1, 4); ctx.fillRect(x + 6, y + 1, 1, 3); }
+  if (F && !e.dead && tick % 6 === 0) burst(e.x + 4 + Math.random() * 12, e.y + 2, Math.random() < 0.5 ? '#ff7a2a' : '#ffd27a', 1);
+  if (e.hp < (F ? 3 : 2)){ ctx.fillStyle = F ? '#ffd27a' : '#3a1a10'; ctx.fillRect(x + 8, y + 10, 1, 6); ctx.fillRect(x + 9, y + 15, 3, 1); ctx.fillRect(x + 12, y + 16, 1, 4); ctx.fillRect(x + 6, y + 1, 1, 3); }
   ctx.globalAlpha = 1;
 }
 function drawHearts(){
@@ -2303,14 +2370,14 @@ function draw(){
     else ctx.drawImage(img, sx, ey);
     if (e.kind === 'bscorp' && e.st === 'warn' && !e.dead){ ctx.fillStyle = '#e0473a'; ctx.fillRect(sx + 7, ey - 11, 2, 6); ctx.fillRect(sx + 7, ey - 3, 2, 2); }
     if (e.kind === 'jackal' && e.chasing && !e.dead && tick % 40 < 20){ ctx.fillStyle = '#e0473a'; ctx.fillRect(sx + (e.dir > 0 ? 13 : 2), ey + 2, 1, 1); }
-    if (e.kind === 'magpie' && !e.dead && e.loot){ const L = e.loot; if (L === 'sword') ctx.drawImage(SWORD, sx + 2, ey + 7, 11, 5); else if (L === 'bow') ctx.drawImage(BOW, sx + 4, ey + 6, 6, 8); else ctx.drawImage(SHIELD, sx + 4, ey + 6, 7, 8); }
+    if (e.kind === 'magpie' && !e.dead && e.loot){ const L = e.loot; if (L === 'chakram') drawChakram(sx + 8, ey + 10, tick * 0.2); else if (L === 'sword') ctx.drawImage(SWORD, sx + 2, ey + 7, 11, 5); else if (L === 'bow') ctx.drawImage(BOW, sx + 4, ey + 6, 6, 8); else ctx.drawImage(SHIELD, sx + 4, ey + 6, 7, 8); }
     if (e.kind === 'magpie' && e.state === 'warn' && !e.dead){ ctx.fillStyle = '#ffd27a'; ctx.fillRect(sx + 7, ey - 11, 2, 6); ctx.fillRect(sx + 7, ey - 3, 2, 2); }
     if (e.kind === 'vulture' && e.state === 'warn' && !e.dead){ ctx.fillStyle = '#ffd27a'; ctx.fillRect(sx + 7, ey - 11, 2, 6); ctx.fillRect(sx + 7, ey - 3, 2, 2); }
   }
   for (const s of shots){
     const sx = Math.round(s.x - cx), sy = Math.round(s.y);
     if (s.wave){
-      ctx.fillStyle = 'rgba(201,138,76,.85)';
+      ctx.fillStyle = s.hot ? 'rgba(255,110,40,.9)' : 'rgba(201,138,76,.85)';
       for (let i = 0; i < 4; i++){ const hh = 8 - i * 2; ctx.fillRect(sx + (s.vx > 0 ? i * 3 : 9 - i * 3), sy + 8 - hh, 2, hh); }
       ctx.fillStyle = 'rgba(242,198,130,.7)'; ctx.fillRect(sx, sy + 6, 10, 2);
       continue;
@@ -2337,12 +2404,13 @@ function draw(){
     if (kx < -20 || kx > VW + 20) continue;
     ctx.fillStyle = `rgba(242,196,106,${0.25 + Math.sin(tick * 0.1) * 0.12})`;
     ctx.beginPath(); ctx.arc(kx + 5, ky + 6, 10, 0, Math.PI * 2); ctx.fill();
-    if (k.kind === 'sword') ctx.drawImage(SWORD, kx, ky + 2, 14, 7); else if (k.kind === 'bow') ctx.drawImage(BOW, kx, ky, 10, 12); else ctx.drawImage(SHIELD, kx, ky, 10, 12);
+    if (k.kind === 'chakram') drawChakram(kx + 5, ky + 6, tick * 0.05); else if (k.kind === 'sword') ctx.drawImage(SWORD, kx, ky + 2, 14, 7); else if (k.kind === 'bow') ctx.drawImage(BOW, kx, ky, 10, 12); else ctx.drawImage(SHIELD, kx, ky, 10, 12);
   }
   for (const g of gemDrops){
     if (g.life < 120 && Math.floor(tick / 5) % 2) continue;
     drawGem(Math.round(g.x - cx) + 5, Math.round(g.y) + 5, g.seed, g.kind);
   }
+  if (ring) drawChakram(Math.round(ring.x - cx) + 4, Math.round(ring.y) + 4, ring.spin);
   for (const a of arrows){
     const ax = Math.round(a.x - cx), ay = Math.round(a.y), d = a.vx > 0 ? 1 : -1;
     ctx.fillStyle = '#8a5232'; ctx.fillRect(ax, ay, 10, 1);
@@ -2383,6 +2451,7 @@ function draw(){
         ctx.drawImage(BOW, bx, py + 5*s, 6*s, 8*s);
       }
     }
+    if (chak && !ring && !p.dying) drawChakram(px + (p.face === 0 ? 12 : 4) * s, py + 10 * s, tick * 0.08);
     if (p.sword && !p.dying){
       if (p.atk > 0){
         const prog = 1 - p.atk / 16;
@@ -2400,14 +2469,13 @@ function draw(){
       }
     }
   }
-  if (boss && !boss.gone){
-    const b = boss;
+  bosses.forEach((b, bi) => { if (b.gone) return;
     let bx = Math.round(b.x - cx) - 2, by = Math.round(b.y) - 10;
     if (b.state === 'chargeWarn' || b.state === 'throwWarn' || b.state === 'stunned') bx += (tick % 4 < 2) ? 1 : -1;
     const hide = (b.inv > 0 && Math.floor(tick / 3) % 2) || (b.dead && Math.floor(tick / 2) % 2);
     if (!hide){
       if (b.dead){ ctx.globalAlpha = Math.max(0, 1 - b.deathT / 90); }
-      ctx.drawImage(BOSS[b.dir > 0 ? 0 : 1], bx, by, 48, 28);
+      ctx.drawImage((b.slot ? BOSS_TWIN : BOSS)[b.dir > 0 ? 0 : 1], bx, by, 48, 28);
       ctx.globalAlpha = 1;
     }
     if (!b.dead){
@@ -2416,14 +2484,14 @@ function draw(){
       if (b.state === 'stunned'){ ctx.fillStyle = '#ffd27a'; for (let i = 0; i < 3; i++){ const a = tick * 0.15 + i * 2.1; ctx.fillRect(bx + 24 + Math.cos(a) * 12, by + 6 + Math.sin(a) * 4, 3, 3); } }
     }
     if (b.state !== 'sleep'){
-      const w = 160, x0 = (VW - w) / 2, y0 = 10;
+      const w = 160, x0 = (VW - w) / 2, y0 = 10 + bi * 22; // une barre par scorpion
       ctx.fillStyle = 'rgba(27,19,32,.75)'; ctx.fillRect(x0 - 4, y0 - 4, w + 8, 20);
       ctx.fillStyle = '#4a3346'; ctx.fillRect(x0, y0 + 8, w, 6);
       ctx.fillStyle = '#e0473a'; ctx.fillRect(x0, y0 + 8, Math.round(w * b.hp / b.maxHp), 6);
       ctx.fillStyle = '#f3dcb8'; ctx.font = '8px "Pixelify Sans", monospace'; ctx.textBaseline = 'top';
-      ctx.fillText(t('boss'), x0, y0 - 2);
+      ctx.fillText(t('boss') + (bosses.length > 1 ? ' ' + (bi + 1) : ''), x0, y0 - 2);
     }
-  }
+  });
   drawHearts();
   for (const k in crumble){ const c = crumble[k]; if (c.st === 'gone' && c.fy < H * T) drawPlank(c.tx * T - cx, Math.round(c.fy), true); }
   if (TH.storm) drawDust(0.22);
@@ -2439,8 +2507,8 @@ function hud(){
   if (state === 'title') return;
   const sh = p && p.shield > 0 ? '●'.repeat(p.shield) + '○'.repeat(Math.max(0, shieldMax() - p.shield)) : '—';
   if (sh !== last.sh) hShield.textContent = sh;
-  const wp = p && p.sword ? t('scimitar') + (upSword ? '+' : '') : p && p.bow ? t('bow') + (upBow ? '+' : '') + ' ' + arrowsLeft : '—';
-  const al = p && p.bow ? t('atkBow') : t('atk');
+  const wp = p && chak ? t('chakram') : p && p.sword ? t('scimitar') + (upSword ? '+' : '') : p && p.bow ? t('bow') + (upBow ? '+' : '') + ' ' + arrowsLeft : '—';
+  const al = p && chak ? t('atkRing') : p && p.bow ? t('atkBow') : t('atk');
   if (al !== last.al) padA.textContent = al;
   if (wp !== last.wp) hWeapon.textContent = wp;
   const pw = p ? [p.feather > 0 ? t('feather') + ' ' + Math.ceil(p.feather / 60) + ' s' : '', p.speedT > 0 ? t('speed') + ' ' + Math.ceil(p.speedT / 60) + ' s' : ''].filter(Boolean).join(' · ') || '—' : '—';
