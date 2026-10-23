@@ -796,6 +796,46 @@ function difficulty(L){
 let shakeT = 0, shakeA = 0; const shake = a => { shakeA = Math.max(shakeA, a); shakeT = 12; };
 let drops = [], dropsLeft = 1, boss = null, bosses = [], arena = null, gemDrops = [], arrows = [], wormTimer = 120, crumble = {};
 let W, map, groundTop, rockBase, enemies, portal, checkpoint, bumps, items = [], pickups = [], shots = [];
+/* ---------- passages dessinés à la main, glissés entre les parties générées ----------
+   Lignes du haut vers le bas, la dernière est le sol. # sol ou bloc, Q trou, M sable lourd, = corniche, B jarre, o gemme, e scarabée, c cobra. */
+const CHUNKS = [
+  { name: 'escalier', from: 2, rows: [
+    ".......ooo....",
+    "......====....",
+    "..............",
+    "..o...........",
+    ".====......BB.",
+    "..............",
+    "........e.....",
+    "##############"] },
+  { name: 'couloir', from: 3, rows: [
+    "############",
+    "............",
+    "..o..o..o...",
+    "...e....e...",
+    "############"] },
+  { name: 'ilots', from: 2, rows: [
+    "...o...o....o...",
+    "................",
+    "................",
+    "###QQ##QQQ##QQ##"] },
+  { name: 'tour', from: 3, rows: [
+    "......ooc.....",
+    ".....####.....",
+    "....######....",
+    "...########...",
+    "##############"] },
+  { name: 'jarres', from: 2, rows: [
+    "..BBBBB..",
+    ".........",
+    ".........",
+    "....c....",
+    "#########"] },
+  { name: 'bourbier', from: 4, rows: [
+    "..o.o.o.o...",
+    "...e...e....",
+    "#MMMMMMMMM##"] },
+];
 function generate(L, seed){
   const rnd = mulberry32(seed);
   const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
@@ -807,10 +847,24 @@ function generate(L, seed){
   const col = (t, r) => { top.push(t); rock.push(r ?? null); };
   const flat = n => { const a = top.length; for (let i = 0; i < n; i++) col(h); return [a, top.length - 1]; };
   const clampH = v => Math.max(8, Math.min(12, v));
+  const stamps = []; let lastChunk = -1;
+  const placeChunk = () => {
+    const ok = CHUNKS.map((c, i) => i).filter(i => CHUNKS[i].from <= L && i !== lastChunk);
+    const ci = ok[Math.floor(rnd() * ok.length)], rows = CHUNKS[ci].rows, H0 = rows.length, a = top.length;
+    lastChunk = ci;
+    for (let c = 0; c < rows[0].length; c++){
+      if (rows[H0 - 1][c] === 'Q'){ col(null); continue; }
+      let k = 1; while (k < H0 && rows[H0 - 1 - k][c] === '#') k++; // hauteur du sol plein dans cette colonne
+      col(h - (k - 1));
+    }
+    stamps.push({ a, rows, h });
+    flat(2);
+  };
 
   flat(10);
   while (top.length < D.len - 16){
     if (!cp && top.length >= D.len / 2){ const [a] = flat(5); cp = { col: a + 2, top: h }; continue; }
+    if (L >= 2 && stamps.length < 3 && top.length > 14 && chance(0.12)){ placeChunk(); continue; }
     const r = rnd();
     if (r < D.gapP){
       // quicksand pit, sometimes split by a small wooden island
@@ -894,6 +948,22 @@ function generate(L, seed){
 
   // ledges with jars
   const jars = [];
+  for (const st of stamps){ // décor des passages dessinés à la main
+    const H0 = st.rows.length;
+    for (let r = 0; r < H0; r++){
+      const k = H0 - 1 - r, my = st.h - k;
+      if (my < 1) continue;
+      for (let c = 0; c < st.rows[r].length; c++){
+        const ch = st.rows[r][c], mx = st.a + c;
+        if (k === 0){ if (ch === 'M' && rockBase[mx] === null && groundTop[mx] === st.h) map[st.h][mx] = 'M'; continue; }
+        if (ch === '#'){ if (map[my][mx] === '.') map[my][mx] = 'R'; }  // bloc suspendu (plafond du couloir)
+        else if (ch === '=' || ch === 'o') { if (map[my][mx] === '.') map[my][mx] = ch; }
+        else if (ch === 'B'){ if (map[my][mx] === '.'){ map[my][mx] = 'B'; jars.push([mx, my]); } }
+        else if (ch === 'e') enemySpots.push([mx, groundTop[mx] ?? st.h]);
+        else if (ch === 'c') cobraSpots.push([mx, groundTop[mx] ?? st.h]);
+      }
+    }
+  }
   for (const [a, b, row] of ledges){
     for (let c = a; c <= b; c++){
       const isJar = (c - a) % 2 === 1 || chance(0.25);
